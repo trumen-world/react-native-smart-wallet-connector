@@ -96,6 +96,12 @@ export function ConnectSelect({
     });
   }
 
+  function handleJumpToRNApp(address: string) {
+    const appUrl = `RNCBSmartWallet://address?address=${encodeURIComponent(address)}`;
+    console.log('appUrl', appUrl);
+    window.location.href = appUrl;
+  }
+
   function handleDisconnect() {
     disconnect();
     setDialogOpen(false);
@@ -163,10 +169,15 @@ export function ConnectSelect({
                   </div>
                 )}
                 {account.addresses && (
+                  <div>
                   <p className="font-light text-xs overflow-clip">
                     {account.addresses[0]}
                   </p>
+                  <Button onClick={handleJumpToRNApp (account.addresses[0])}>Back to App</Button>
+                  </div>
+
                 )}
+
                 {account.chainId && (
                   <p className="font-light text-xs">
                     Chain ID: {account.chainId} - {transport}
