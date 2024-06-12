@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect } from "react";
 import { base } from "viem/chains";
-import { createConfig, http } from "wagmi";
+import { createConfig, http, useAccountEffect } from "wagmi";
 import { useAccount, useConnect } from "wagmi";
 import { coinbaseWallet } from "wagmi/connectors";
 
@@ -24,7 +24,26 @@ export default function Create() {
   });
   const account = useAccount({ config });
 
-  useEffect(() => {
+  useAccountEffect({
+    onConnect(data) {
+      handleJumpToRNApp()
+    },
+    onDisconnect() {
+      console.log('Disconnected!')
+    },
+  })
+
+  function handleJumpToRNApp() {
+    if (!user.account?.address) return;
+
+    const appUrl = `RNCBSmartWallet://address?address=${encodeURIComponent(user.account.address)}`;
+    console.log("appUrl", appUrl);
+    window.location.href = appUrl;
+
+    return;
+  }
+
+  function handleCreateButtonPress() {
     connect({
       chainId: 8453,
       connector: coinbaseWallet({
@@ -33,21 +52,24 @@ export default function Create() {
       }),
     });
     setUser((prevState: UserState) => ({ ...prevState, account }));
-  }, []);
+  }
 
   return (
     <Page>
       <p className="p-4 flex flex-col w-72 text-center">
         <span className="text-blue-500 font-bold">CREATE</span>
-        <span>
-          Go to{" "}
-          <Link
-            href={"https://keys.coinbase.com"}
-            className="italic text-sky-500 dark:text-sky-300"
-          >
-            keys.coinbase.com
-          </Link>
+        {/* make this a button "" */}
+        <span
+          onClick={handleCreateButtonPress}
+        >
+        click here to connect
         </span>
+        
+        {user.account?.address && <span
+          onClick={handleJumpToRNApp}
+        >
+        click here to go back to the app
+        </span>}
       </p>
       <p className="p-4 flex flex-col w-96 text-center">
         Connection Status:

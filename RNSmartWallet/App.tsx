@@ -64,8 +64,8 @@ const App = () => {
   };
 
   const handleCreateButtonPress = () => {
-    // const url = 'http://localhost:3000/create';
-    const url = 'http://localhost:3000';
+    const url = 'http://localhost:3000/create';
+    // const url = 'http://localhost:3000';
     Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
