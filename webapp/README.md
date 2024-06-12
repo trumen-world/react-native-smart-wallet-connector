@@ -4,9 +4,8 @@ Production URL: [TO BE DETERMINED](https://tbd.com)
 
 ---
 
-![DEMO1](./public/trumen-demo-1.jpeg)
-![DEMO2](./public/trumen-demo-2.jpeg)
-![MOBILEDEMO1](./public/trumen-mobile-demo.png)
+![DEMO1](./public/smart-wallet-demo-1.png)
+![DEMO2](./public/smart-wallet-demo-2.png)
 
 ---
 

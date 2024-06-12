@@ -39,8 +39,8 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { useConnect, useDisconnect, UseAccountReturnType } from "wagmi";
 import { useEffect, useState } from "react";
-import { cn, getChainName } from "@/lib/utils";
 import useUser, { ConnectionStatus } from "@/lib/hooks/use-user";
+import { cn, getChainName } from "@/lib/utils";
 
 const STATUS_COLORS = {
   connected: "bg-lime-600 dark:bg-lime-300",
@@ -98,9 +98,9 @@ export function ConnectSelect({
 
   function handleJumpToRNApp() {
     if (!account?.addresses) return;
-    
+
     const appUrl = `RNCBSmartWallet://address?address=${encodeURIComponent(account.addresses[0])}`;
-    console.log('appUrl', appUrl);
+    console.log("appUrl", appUrl);
     window.location.href = appUrl;
 
     return;
@@ -144,7 +144,7 @@ export function ConnectSelect({
             <Button
               variant="secondary"
               size="icon"
-              className="rounded-full bg-background border"
+              className="bg-background border-2 rounded-full"
             >
               {account.status === "connected" ? (
                 <CircleUser className="h-5 w-5" />
@@ -185,11 +185,11 @@ export function ConnectSelect({
                 )}
               </div>
             </DropdownMenuLabel>
-            {account.addresses && 
-              <DropdownMenuItem
-              onClick={handleJumpToRNApp}
-              >Back to App</DropdownMenuItem>
-            }
+            {account.addresses && (
+              <DropdownMenuItem onClick={handleJumpToRNApp}>
+                Back to App
+              </DropdownMenuItem>
+            )}
 
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuItem
