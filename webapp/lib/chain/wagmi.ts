@@ -27,6 +27,17 @@ export const config = createConfig({
   transports,
 });
 
+export const swConfig = createConfig({
+  chains: [base],
+  connectors: [
+    coinbaseWallet({
+      appName: "Trumen World",
+      preference: "smartWalletOnly",
+    }),
+  ],
+  transports: { [base.id]: http() },
+});
+
 declare module "wagmi" {
   interface Register {
     config: typeof config;
