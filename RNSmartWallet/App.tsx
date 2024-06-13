@@ -5,56 +5,60 @@
  * @format
  */
 
-import React, {useState, useEffect} from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useState} from 'react';
+// import type {PropsWithChildren} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
   StyleSheet,
   Linking,
   TextInput,
-  Alert
 } from 'react-native';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
+// type SectionProps = PropsWithChildren<{
+//   title: string;
+// }>;
 
 const App = () => {
-  const [address , setAddress] = useState<string>('');
-  const [messageToSign, onChangeText] = React.useState('');
+  const [address, setAddress] = useState<string>('');
+  const [signature, setSignature] = useState<string | null>(null);
+  const [messageToSign, onChangeText] = useState('');
 
-  const handleDeepLink = (event: { url: any; }) => {
-    console.log("event", event);
+  const handleDeepLink = (event: {url: any}) => {
+    console.log('event', event);
 
     const url = event.url;
     console.log('url', url);
 
-    const address = getQueryParams(url).address;
+    const addressParam = getQueryParams(url).address;
+    const signatureParam = getQueryParams(url).signature;
 
-    if (address) {
-      setAddress(address);
-      console.log('address', address);
+    if (addressParam) {
+      setAddress(addressParam);
+      console.log('address', addressParam);
       // You can handle the address here (e.g., navigate to a specific screen)
-      
+    }
+    if (signatureParam) {
+      setSignature(signatureParam);
+      console.log('signatureParam', signatureParam);
+      // You can handle the address here (e.g., navigate to a specific screen)
     }
   };
-  
-  Linking.getInitialURL().then((url) => {
-    if (url) {
-      console.log('Initial URL:', url);
-      handleDeepLink({ url });
-    }
-  }).catch(err => console.error('An error occurred', err));
 
+  Linking.getInitialURL()
+    .then(url => {
+      if (url) {
+        console.log('Initial URL:', url);
+        handleDeepLink({url});
+      }
+    })
+    .catch(err => console.error('An error occurred', err));
 
   Linking.addEventListener('url', handleDeepLink);
 
-  const getQueryParams = (url: string): { [key: string]: string } => {
-    const params: { [key: string]: string } = {};
+  const getQueryParams = (url: string): {[key: string]: string} => {
+    const params: {[key: string]: string} = {};
     const regex = /[?&]([^=#]+)=([^&#]*)/g;
     let match;
     while ((match = regex.exec(url))) {
@@ -79,7 +83,7 @@ const App = () => {
 
   const handleSignButtonPress = () => {
     // const url = 'http://localhost:3000/sign/{messageToSign}';
-    const url = 'http://localhost:3000';
+    const url = `http://localhost:3000/sign?message=${messageToSign}&address=${address}`;
     Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
@@ -106,14 +110,16 @@ const App = () => {
         onChangeText={onChangeText}
       />
       <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
-        <Text style={styles.buttonText}>Sign the message with CB Smart Wallet</Text>
+        <Text style={styles.buttonText}>
+          Sign the message with CB Smart Wallet
+        </Text>
       </TouchableOpacity>
+      <Text style={styles.signature}>Signature: {signature}</Text>
 
       {/* Handle NFT Minting */}
       {/* <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
         <Text style={styles.buttonText}>Sign the message with CB Smart Wallet</Text>
       </TouchableOpacity> */}
-
     </View>
   );
 };
@@ -148,6 +154,10 @@ const styles = StyleSheet.create({
   },
   webView: {
     flex: 1,
+  },
+  signature: {
+    maxHeight: 256,
+    overflow: 'scroll',
   },
 });
 
