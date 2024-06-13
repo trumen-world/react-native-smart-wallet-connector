@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import Header from "@/components/Header";
 import { cn } from "@/lib/utils";
+import type { Viewport } from "next";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -13,6 +14,11 @@ const fontSans = FontSans({
 export const metadata: Metadata = {
   title: "React Native Smart Wallet Integration",
   description: "For Coinbase Onchain Summer Hackathon",
+};
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  userScalable: false,
 };
 
 export default function RootLayout({
