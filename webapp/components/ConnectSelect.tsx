@@ -108,6 +108,12 @@ export function ConnectSelect({
 
   function handleDisconnect() {
     disconnect();
+    setUser({
+      account: null,
+      balance: null,
+      connectionStatus: ConnectionStatus.DISCONNECTED,
+      name: null,
+    });
     setDialogOpen(false);
   }
 
