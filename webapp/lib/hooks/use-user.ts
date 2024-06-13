@@ -12,7 +12,10 @@ export type UserState = {
   balance: bigint | null;
   connectionStatus: ConnectionStatus | null;
   name: string | null;
-  signature?: Hex | null;
+  signature?: {
+    hex: Hex | null;
+    valid: boolean | null;
+  };
 };
 
 const configAtom = atom<UserState>({

@@ -8,12 +8,23 @@ import { ThemeToggleMobile } from "./ThemeToggleMobile";
 import { Menu, Wallet } from "lucide-react";
 import { ConnectSelect } from "./ConnectSelect";
 import { useAccount } from "wagmi";
-import useUser from "@/lib/hooks/use-user";
+import useUser, { UserState } from "@/lib/hooks/use-user";
+import { useEffect, useMemo } from "react";
 
 export default function Header() {
-  const [user] = useUser();
+  const [user, setUser] = useUser();
   const account = useAccount();
-  user.account = account;
+
+  useEffect(() => {
+    if (account.address && user.account?.address !== account.address) {
+      setUser((prevUser: UserState) => ({
+        ...prevUser,
+        account,
+      }));
+    }
+  }, [account.address, setUser, user.account, account]);
+
+  const userAccount = useMemo(() => account, [account]);
 
   return (
     <header className="sticky top-0 flex w-full h-16 justify-between items-center gap-2 border-b bg-background/10 backdrop-blur-[1px] px-4 md:px-6">
@@ -83,7 +94,7 @@ export default function Header() {
             </nav>
           </SheetContent>
         </Sheet>
-        <ConnectSelect account={user.account} />
+        <ConnectSelect account={userAccount} />
       </div>
       <div className="md:flex hidden">
         <ThemeToggle />

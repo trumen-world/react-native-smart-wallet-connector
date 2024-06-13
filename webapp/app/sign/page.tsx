@@ -26,8 +26,7 @@ export default async function Sign({
       </p>
 
       <Signer
-        accountAddress={ADDRESS_PARAM}
-        // messageToSign={MESSAGE_PARAM}
+      // messageToSign={MESSAGE_PARAM}
       />
 
       {ADDRESS_PARAM ? <UserAddress /> : <></>}

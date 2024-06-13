@@ -36,6 +36,7 @@ export default function Create() {
   const connector = coinbaseWallet({
     appName: "Coinbase Smart Wallet w/ React Native",
     preference: "smartWalletOnly",
+    chainId: 8453,
   });
 
   async function handleConnect() {

@@ -8,13 +8,13 @@ export const client = createPublicClient({
 }); // --> Usage: const blockNumber = await client.getBlockNumber()
 
 // Set up wallet (WRITE) client with desired chain & transport.
-export const walletClient = createWalletClient({
-  chain: base,
-  transport:
-    typeof window !== "undefined"
-      ? custom((window as any).ethereum)
-      : http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
-});
+export const walletClient =
+  typeof window !== "undefined" && window.ethereum
+    ? createWalletClient({
+        chain: base,
+        transport: custom(window.ethereum),
+      })
+    : null;
 // --> Usage: const blockNumber = await walletClient.write({
 //   account,
 //   address: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2',
