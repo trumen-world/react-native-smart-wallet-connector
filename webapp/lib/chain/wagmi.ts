@@ -3,18 +3,14 @@ import { http, createConfig } from "wagmi";
 import { base, mainnet, sepolia } from "wagmi/chains";
 import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
 
-export type TransportConfig = Record<
-  typeof mainnet.id | typeof base.id,
-  HttpTransport
->;
+export type TransportConfig = Record<typeof base.id, HttpTransport>;
 
 export const transports: TransportConfig = {
-  [mainnet.id]: http(),
   [base.id]: http(),
 };
 
 export const config = createConfig({
-  chains: [mainnet, base],
+  chains: [base],
   connectors: [
     injected(),
     coinbaseWallet({

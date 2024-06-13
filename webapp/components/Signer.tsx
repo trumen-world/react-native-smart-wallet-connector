@@ -13,11 +13,10 @@ import {
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { useEffect, useState } from "react";
-import { client, walletClient } from "@/lib/chain/viem";
-import { signSiweMessage, verifySiweSignature } from "@/lib/utils";
-import { useAccount } from "wagmi";
-import { swConfig } from "@/lib/chain/wagmi";
+import { client } from "@/lib/chain/viem";
 import { Check } from "lucide-react";
+import { useSignMessage } from "wagmi";
+import { Hex } from "viem";
 
 const Signer = () => {
   const [user, setUser] = useUser();
@@ -25,6 +24,18 @@ const Signer = () => {
   const chainId = 8453;
   const version = "1";
   const statement = "Smart Wallet React Native SIWE";
+  const { signMessage } = useSignMessage({
+    mutation: {
+      onSuccess: (signature: Hex) =>
+        setUser((prev: UserState) => ({
+          ...prev,
+          signature: {
+            hex: signature,
+            valid: true,
+          },
+        })),
+    },
+  });
 
   useEffect(() => {
     if (!user.account?.address) return;
@@ -50,37 +61,40 @@ const Signer = () => {
   // }, [account, setUser]);
 
   const SIGN_SIWE_MESSAGE = async () => {
-    console.log("Account address: ", user.account?.address);
-    console.log("Message: ", message);
-
     if (!user.account?.address || !message) {
       console.error("Missing required parameters for SIGN_SIWE_MESSAGE.");
       return;
     }
-    try {
-      const signature = await signSiweMessage(message);
-      if (signature) {
-        setUser((prev: UserState) => ({
-          ...prev,
-          signature: {
-            hex: signature,
-            valid: false,
-          },
-        }));
-        const valid = await verifySiweSignature(signature, message);
-        if (valid)
-          setUser((prev: UserState) => ({
-            ...prev,
-            signature: {
-              hex: signature,
-              valid,
-            },
-          }));
-      }
-    } catch (error) {
-      console.error("Error during SIGN_SIWE_MESSAGE: ", error);
-    }
+
+    console.log("Account address: ", user.account?.address);
+    console.log("Message: ", message);
+
+    signMessage({
+      account: user.account?.address,
+      message,
+    });
+
+    console.log("user.signature?.hex", user.signature?.hex);
   };
+
+  useEffect(() => {
+    const verifySignature = async () => {
+      if (user.signature?.hex && user.account?.address && message) {
+        const valid = await client.verifyMessage({
+          address: user.account.address,
+          message: message,
+          signature: user.signature.hex,
+        });
+        console.log("valid", valid);
+        if (valid) {
+          console.log("✅ VALID SIGNATURE");
+          console.log(user.signature?.hex);
+          return valid;
+        }
+      }
+    };
+    verifySignature();
+  }, [user.signature, user.account?.address, message]);
 
   const RETURN_WITH_SIGNATURE = () => {
     if (user.account && user.signature?.hex) {
@@ -123,7 +137,7 @@ const Signer = () => {
               <Badge variant={"secondary"}>
                 Signature{" "}
                 {user.signature?.valid && (
-                  <div className="flex text-lime-500 gap-[2px] ml-2">
+                  <div className="flex text-lime-800 dark:text-lime-500 gap-[2px] ml-2">
                     <p className="text-xs">Valid</p>
                     <Check className="h-4 w-4 " />
                   </div>

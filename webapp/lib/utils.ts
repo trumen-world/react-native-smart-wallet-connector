@@ -9,7 +9,7 @@ import {
   custom,
 } from "viem";
 import { base } from "viem/chains";
-import { client } from "./chain/viem";
+import { client, walletClient } from "./chain/viem";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -24,16 +24,8 @@ export function handleAppReturn() {
   window.location.href = appUrl;
 }
 
-export const signSiweMessage = async (message: string) => {
-  const walletClient = createWalletClient({
-    chain: base,
-    transport: custom(window.ethereum),
-  });
-  const [account] = await walletClient.getAddresses();
-  console.log(message);
-  console.log(account);
-  console.log(walletClient);
-  if (message && account && walletClient) {
+export const signSiweMessage = async (account: Address, message: string) => {
+  if (message && walletClient && account) {
     try {
       const signature = await walletClient.signMessage({
         account,
@@ -48,6 +40,7 @@ export const signSiweMessage = async (message: string) => {
 };
 
 export const verifySiweSignature = async (
+  address: Address,
   signature: `0x${string}`,
   message: string,
 ) => {
@@ -55,9 +48,7 @@ export const verifySiweSignature = async (
     chain: base,
     transport: custom(window.ethereum),
   });
-  const [address] = await walletClient.getAddresses();
   console.log(message);
-  console.log(address);
   console.log(walletClient);
   if (message && address && walletClient) {
     try {
@@ -66,8 +57,11 @@ export const verifySiweSignature = async (
         message: message,
         signature,
       });
-      if (valid) console.log("✅ VALID SIGNATURE");
-      return valid;
+      if (valid) {
+        console.log("✅ VALID SIGNATURE");
+        console.log(signature);
+        return valid;
+      }
     } catch (error) {
       console.error("Error verifying message: ", error);
     }

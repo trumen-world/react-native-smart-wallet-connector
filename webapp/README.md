@@ -65,7 +65,7 @@ Easily manage the chains, wallet providers and transport layers of the app using
 ```typescript
 // lib/wagmi.ts
 export const config = createConfig({
-  chains: [mainnet, base],
+  chains: [base],
   connectors: [
     injected(),
     coinbaseWallet({

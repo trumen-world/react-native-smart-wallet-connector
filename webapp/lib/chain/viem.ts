@@ -14,7 +14,10 @@ export const walletClient =
         chain: base,
         transport: custom(window.ethereum),
       })
-    : null;
+    : createWalletClient({
+        chain: base,
+        transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
+      });
 // --> Usage: const blockNumber = await walletClient.write({
 //   account,
 //   address: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2',
