@@ -62,10 +62,22 @@ export default function Header() {
                 </span>
               </Link>
               <Link
-                href="#"
+                href="/"
                 className="text-muted-foreground hover:text-foreground"
               >
                 Dashboard
+              </Link>
+              <Link
+                href="/create"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Create Wallet
+              </Link>
+              <Link
+                href="/sign"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                SIWE
               </Link>
               <ThemeToggleMobile />
             </nav>
