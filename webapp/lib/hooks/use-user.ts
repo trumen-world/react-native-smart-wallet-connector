@@ -1,4 +1,5 @@
 import { atom, useAtom } from "jotai";
+import { Hex } from "viem";
 import { UseAccountReturnType } from "wagmi";
 
 export enum ConnectionStatus {
@@ -11,6 +12,7 @@ export type UserState = {
   balance: bigint | null;
   connectionStatus: ConnectionStatus | null;
   name: string | null;
+  signature?: Hex | null;
 };
 
 const configAtom = atom<UserState>({
