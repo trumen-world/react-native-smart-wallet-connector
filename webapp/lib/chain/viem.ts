@@ -1,17 +1,17 @@
 import { createPublicClient, createWalletClient, custom, http } from "viem";
-import { mainnet } from "viem/chains";
+import { base } from "viem/chains";
 
 // Set up public (READ) client with desired chain & transport.
 export const client = createPublicClient({
-  chain: mainnet,
+  chain: base,
   transport: http(),
 }); // --> Usage: const blockNumber = await client.getBlockNumber()
 
 // Set up wallet (WRITE) client with desired chain & transport.
 export const walletClient = createWalletClient({
-  chain: mainnet,
+  chain: base,
   transport:
-    typeof window !== "undefined" && (window as any).ethereum
+    typeof window !== "undefined"
       ? custom((window as any).ethereum)
       : http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
 });
