@@ -9,3 +9,8 @@ export function cn(...inputs: ClassValue[]) {
 export function getChainName(chainId: number) {
   return config.chains.find((chain) => chain.id === chainId)?.name || null;
 }
+
+export function handleAppReturn() {
+  const appUrl = `RNCBSmartWallet://`;
+  window.location.href = appUrl;
+}
