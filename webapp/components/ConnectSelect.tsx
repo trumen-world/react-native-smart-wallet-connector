@@ -90,7 +90,9 @@ export function ConnectSelect({
       title: "Connecting with:",
       description: (
         <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(user)}</code>
+          <code className="text-white">
+            {JSON.stringify(user.account?.address)}
+          </code>
         </pre>
       ),
     });
