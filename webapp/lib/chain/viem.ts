@@ -1,9 +1,9 @@
 import { createPublicClient, createWalletClient, custom, http } from "viem";
-import { base } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 
 // Set up public (READ) client with desired chain & transport.
 export const client = createPublicClient({
-  chain: base,
+  chain: baseSepolia,
   transport: http(),
 }); // --> Usage: const blockNumber = await client.getBlockNumber()
 
@@ -11,11 +11,11 @@ export const client = createPublicClient({
 export const walletClient =
   typeof window !== "undefined" && window.ethereum
     ? createWalletClient({
-        chain: base,
+        chain: baseSepolia,
         transport: custom(window.ethereum),
       })
     : createWalletClient({
-        chain: base,
+        chain: baseSepolia,
         transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
       });
 // --> Usage: const blockNumber = await walletClient.write({
