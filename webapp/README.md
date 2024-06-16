@@ -1,4 +1,4 @@
-# Trumen World Smart Wallet App
+# React Native Smart Wallet App
 
 Production URL: [TO BE DETERMINED](https://tbd.com)
 
