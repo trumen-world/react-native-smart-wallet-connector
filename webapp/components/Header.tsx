@@ -9,11 +9,16 @@ import { Menu, Wallet } from "lucide-react";
 import { ConnectSelect } from "./ConnectSelect";
 import { useAccount } from "wagmi";
 import useUser, { UserState } from "@/lib/hooks/use-user";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function Header() {
   const [user, setUser] = useUser();
   const account = useAccount();
+  const [sheetOpen, setSheetOpen] = useState<boolean>(false);
+
+  const sheetOnOpenChange = () => {
+    setSheetOpen(!sheetOpen);
+  };
 
   useEffect(() => {
     if (account.address && user.account?.address !== account.address) {
@@ -27,7 +32,7 @@ export default function Header() {
   const userAccount = useMemo(() => account, [account]);
 
   return (
-    <header className="sticky top-0 flex w-full h-16 justify-between items-center gap-2 border-b bg-background/10 backdrop-blur-[1px] px-4 md:px-6">
+    <header className="sticky top-0 z-50 flex w-full h-16 justify-between items-center gap-2 border-b bg-background/10 backdrop-blur-[1px] px-4 md:px-6">
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:justify-between w-full md:gap-5 md:text-sm lg:gap-6">
         <Link
           href="/"
@@ -44,18 +49,22 @@ export default function Header() {
         </Link>
       </nav>
       {/* MOBILE */}
-      <div className="flex md:hidden items-center gap-2">
+      <Link
+        href="/"
+        className="flex md:hidden items-center gap-2 text-lg font-semibold md:text-base"
+      >
         <Wallet className="w-6 h-6 text-indigo-700" />
         <p className="text-blue-600 tracking-tighter leading-3 text-xs max-w-[150px]">
           Coinbase Smart Wallet with React Native
         </p>
-      </div>
+      </Link>
       <div className="flex gap-2">
-        <Sheet>
+        <Sheet open={sheetOpen} onOpenChange={sheetOnOpenChange}>
           <SheetTrigger asChild>
             <Button
               size="icon"
               className="shrink-0 md:hidden border bg-background text-foreground dark:hover:bg-stone-900 hover:bg-stone-100"
+              onClick={sheetOnOpenChange}
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle navigation menu</span>
@@ -75,18 +84,21 @@ export default function Header() {
               <Link
                 href="/"
                 className="text-muted-foreground hover:text-foreground"
+                onClick={sheetOnOpenChange}
               >
                 Dashboard
               </Link>
               <Link
                 href="/create"
                 className="text-muted-foreground hover:text-foreground"
+                onClick={sheetOnOpenChange}
               >
                 Create Wallet
               </Link>
               <Link
                 href="/sign"
                 className="text-muted-foreground hover:text-foreground"
+                onClick={sheetOnOpenChange}
               >
                 SIWE
               </Link>
