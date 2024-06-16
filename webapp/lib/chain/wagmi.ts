@@ -1,16 +1,16 @@
 import { HttpTransport } from "viem";
 import { http, createConfig } from "wagmi";
-import { base, mainnet, sepolia } from "wagmi/chains";
+import { base, baseSepolia, mainnet, sepolia } from "wagmi/chains";
 import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
 
-export type TransportConfig = Record<typeof base.id, HttpTransport>;
+export type TransportConfig = Record<typeof baseSepolia.id, HttpTransport>;
 
 export const transports: TransportConfig = {
-  [base.id]: http(),
+  [baseSepolia.id]: http(),
 };
 
 export const config = createConfig({
-  chains: [base],
+  chains: [baseSepolia],
   connectors: [
     injected(),
     coinbaseWallet({
@@ -21,17 +21,6 @@ export const config = createConfig({
   ],
   ssr: true,
   transports,
-});
-
-export const swConfig = createConfig({
-  chains: [base],
-  connectors: [
-    coinbaseWallet({
-      appName: "Trumen World",
-      preference: "smartWalletOnly",
-    }),
-  ],
-  transports: { [base.id]: http() },
 });
 
 declare module "wagmi" {
