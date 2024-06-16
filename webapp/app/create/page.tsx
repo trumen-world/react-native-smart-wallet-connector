@@ -3,7 +3,7 @@ import Page from "@/components/Page";
 import { Button } from "@/components/ui/button";
 import useUser, { type UserState } from "@/lib/hooks/use-user";
 import { cn } from "@/lib/utils";
-import { base } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { createConfig, http } from "wagmi";
 import { useAccount, useConnect } from "wagmi";
 import { coinbaseWallet } from "wagmi/connectors";
@@ -22,21 +22,21 @@ export default function Create() {
   const [user, setUser] = useUser();
   const { connect, status, error } = useConnect();
   const config = createConfig({
-    chains: [base],
+    chains: [baseSepolia],
     connectors: [
       coinbaseWallet({
         appName: "Trumen World",
         preference: "smartWalletOnly",
       }),
     ],
-    transports: { [base.id]: http() },
+    transports: { [baseSepolia.id]: http() },
   });
   const account = useAccount({ config });
-  const chainId = 8453;
+  const chainId = 84532;
   const connector = coinbaseWallet({
     appName: "Coinbase Smart Wallet w/ React Native",
     preference: "smartWalletOnly",
-    chainId: 8453,
+    chainId: 84532,
   });
 
   async function handleConnect() {
