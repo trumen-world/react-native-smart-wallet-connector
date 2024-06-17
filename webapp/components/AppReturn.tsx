@@ -26,13 +26,13 @@ const AppReturn = ({
   return (
     <Card className="m-2">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle className="text-center">{title}</CardTitle>
+        <CardDescription className="text-center">{description}</CardDescription>
       </CardHeader>
       <CardContent className="items-center flex flex-col">
         <Button onClick={HANDLE_APP_RETURN}>Return to App</Button>
       </CardContent>
-      <CardFooter className="text-xs">{message}</CardFooter>
+      <CardFooter className="text-xs text-center">{message}</CardFooter>
     </Card>
   );
 };

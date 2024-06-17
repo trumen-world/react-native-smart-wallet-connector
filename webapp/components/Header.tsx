@@ -10,6 +10,7 @@ import { ConnectSelect } from "./ConnectSelect";
 import { useAccount } from "wagmi";
 import useUser, { UserState } from "@/lib/hooks/use-user";
 import { useEffect, useMemo, useState } from "react";
+import { Badge } from "./ui/badge";
 
 export default function Header() {
   const [user, setUser] = useUser();
@@ -41,12 +42,24 @@ export default function Header() {
           {/* TODO: ADD trumen world logo */}
           <Wallet className="w-8 h-8 text-indigo-700" />
           <h1 className="text-xl text-blue-600 tracking-tighter leading-3">
-            Coinbase Smart Wallet with React Native
+            CBSWRN
           </h1>
           <span className="sr-only">
             Coinbase Smart Wallet with React Native
           </span>
         </Link>
+        <div className="flex gap-2 items-center mr-4">
+          <Link href="/connect" className="text-lg font-semibold md:text-base">
+            <Badge className="rounded-lg hover:border-2  hover:border-primary hover:shadow-md border-2 border-transparent">
+              Create
+            </Badge>
+          </Link>
+          <Link href="/sign" className="text-lg font-semibold md:text-base">
+            <Badge className="rounded-lg hover:border-2  hover:border-primary hover:shadow-md  border-2 border-transparent">
+              SIWE
+            </Badge>
+          </Link>
+        </div>
       </nav>
       {/* MOBILE */}
       <Link
@@ -54,8 +67,8 @@ export default function Header() {
         className="flex md:hidden items-center gap-2 text-lg font-semibold md:text-base"
       >
         <Wallet className="w-6 h-6 text-indigo-700" />
-        <p className="text-blue-600 tracking-tighter leading-3 text-xs max-w-[150px]">
-          Coinbase Smart Wallet with React Native
+        <p className="text-primary tracking-tighter leading-3 text-xs max-w-[150px]">
+          CBSWRN
         </p>
       </Link>
       <div className="flex gap-2">
@@ -72,36 +85,51 @@ export default function Header() {
           </SheetTrigger>
           <SheetContent side="left">
             <nav className="grid gap-6 text-lg font-medium">
-              <Link
-                href="#"
-                className="flex items-center gap-2 text-lg font-semibold"
-              >
-                <Wallet className="w-6 h-6 text-indigo-700" />
-                <span className="sr-only">
-                  Coinbase Smart Wallet with React Native
-                </span>
-              </Link>
-              <Link
-                href="/"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={sheetOnOpenChange}
-              >
-                Dashboard
-              </Link>
-              <Link
+              <div className="flex flex-col gap-2 items-start w-full">
+                <Link
+                  href="/"
+                  className="flex w-full items-center gap-2 text-lg font-semibold text-primary"
+                  onClick={sheetOnOpenChange}
+                >
+                  <Wallet className="w-6 h-6 text-indigo-700" />
+                  <h1>CBSWRN</h1>
+                  <span className="sr-only">
+                    Coinbase Smart Wallet with React Native
+                  </span>
+                </Link>
+                <Link
+                  href="/connect"
+                  className="text-lg w-full flex font-semibold md:text-base"
+                  onClick={sheetOnOpenChange}
+                >
+                  <Badge className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2  hover:border-primary hover:shadow-md  border-2 border-transparent">
+                    Connect
+                  </Badge>
+                </Link>
+                <Link
+                  href="/sign"
+                  className="text-lg w-full flex font-semibold md:text-base"
+                  onClick={sheetOnOpenChange}
+                >
+                  <Badge className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent">
+                    SIWE
+                  </Badge>
+                </Link>
+              </div>
+              {/* <Link
                 href="/create"
                 className="text-muted-foreground hover:text-foreground"
                 onClick={sheetOnOpenChange}
               >
                 Create Wallet
-              </Link>
-              <Link
+              </Link> */}
+              {/* <Link
                 href="/sign"
                 className="text-muted-foreground hover:text-foreground"
                 onClick={sheetOnOpenChange}
               >
                 SIWE
-              </Link>
+              </Link> */}
               <ThemeToggleMobile />
             </nav>
           </SheetContent>

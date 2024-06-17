@@ -39,8 +39,9 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { useConnect, useDisconnect, UseAccountReturnType } from "wagmi";
 import { useEffect, useState } from "react";
-import useUser, { ConnectionStatus } from "@/lib/hooks/use-user";
+import useUser from "@/lib/hooks/use-user";
 import { cn, getChainName } from "@/lib/utils";
+import { NULL_USER } from "@/lib/constants";
 
 const STATUS_COLORS = {
   connected: "bg-lime-600 dark:bg-lime-300",
@@ -113,7 +114,6 @@ export function ConnectSelect({
     setUser({
       account: null,
       balance: null,
-      connectionStatus: ConnectionStatus.DISCONNECTED,
       name: null,
     });
     setDialogOpen(false);
@@ -124,22 +124,16 @@ export function ConnectSelect({
       setUser({
         account,
         balance: user.balance,
-        connectionStatus: ConnectionStatus.DISCONNECTED,
         name: user.name,
       });
     } else if (account?.status === "connected") {
-      setUser({
-        account,
-        balance: user.balance,
-        connectionStatus: ConnectionStatus.CONNECTED,
-        name: user.name,
-      });
+      setUser(NULL_USER);
     }
     setDialogOpen(true);
   }
 
   if (!account) {
-    return <div>No Account</div>;
+    throw new Error("No account");
   }
 
   const transport = account.chainId ? getChainName(account.chainId) : null;
@@ -217,7 +211,7 @@ export function ConnectSelect({
         </DropdownMenu>
 
         <DialogContent>
-          {user.connectionStatus === ConnectionStatus.DISCONNECTED && (
+          {user.account?.status === "disconnected" && (
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -269,7 +263,7 @@ export function ConnectSelect({
               </form>
             </Form>
           )}
-          {user.connectionStatus === ConnectionStatus.CONNECTED && (
+          {user.account?.status === "connected" && (
             <div>
               <DialogHeader>
                 <DialogTitle>Are you sure you want to disconnect?</DialogTitle>

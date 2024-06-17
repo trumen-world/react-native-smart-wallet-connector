@@ -14,36 +14,40 @@ import { Badge } from "./ui/badge";
 import { useAccount, useConnect, useDisconnect, useSignMessage } from "wagmi";
 import { Check, X } from "lucide-react";
 import { SiweMessage } from "siwe";
-import { Hex } from "viem";
 import { cn } from "@/lib/utils";
-import useUser, { ConnectionStatus, UserState } from "@/lib/hooks/use-user";
+import useUser, { UserState } from "@/lib/hooks/use-user";
 import { coinbaseWallet } from "wagmi/connectors";
 import { useSearchParams } from "next/navigation";
 import { generateSiweNonce } from "viem/siwe";
 import { client } from "@/lib/chain/viem";
+import { NULL_USER } from "@/lib/constants";
 
 const Signer = () => {
   const [user, setUser] = useUser();
   const { address, isConnecting, isConnected } = useAccount();
   const [siweMessage, setSiweMessage] = useState<SiweMessage | null>(null);
   const [rnMessage, setRnMessage] = useState<string | null>(null);
+  const [appUrl, setAppUrl] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const { disconnect } = useDisconnect();
+  const { disconnect } = useDisconnect({
+    mutation: {
+      onSettled() {
+        setUser(NULL_USER);
+      },
+    },
+  });
   const { connect } = useConnect();
   const account = useAccount();
-
-  const chainId = 84532;
+  const chainId: 84532 = 84532;
   const connector = coinbaseWallet({
     appName: "Coinbase Smart Wallet w/ React Native",
     preference: "smartWalletOnly",
     chainId: 84532,
   });
-  const DISCONNECTED_USER = {
-    account: null,
-    balance: null,
-    connectionStatus: ConnectionStatus.DISCONNECTED,
-    name: null,
-  } as UserState;
+  const args = {
+    chainId,
+    connector,
+  };
 
   const { signMessage } = useSignMessage({
     mutation: {
@@ -68,21 +72,46 @@ const Signer = () => {
     },
   });
 
-  function handleDisconnect() {
-    disconnect();
-    setUser(DISCONNECTED_USER);
-  }
-  async function handleConnect() {
+  const handleDisconnect = () => {
     try {
-      connect({
-        chainId,
-        connector,
-      });
+      disconnect();
+      setSiweMessage(null);
+      setUser(NULL_USER);
+    } catch (err) {
+      console.error("Disonnection failed", err);
+    }
+  };
+  const handleConnect = () => {
+    try {
+      connect({ ...args });
       setUser((prevState: UserState) => ({ ...prevState, account }));
     } catch (err) {
       console.error("Connection failed", err);
     }
-  }
+  };
+  const returnToApp = () => {
+    if (!appUrl) {
+      throw new Error("Cannot return to app without appUrl");
+    }
+    if (account.address && user.signature?.hex) {
+      window.location.href = appUrl;
+    }
+  };
+
+  useEffect(() => {
+    const addressParam = account.address
+      ? `?address=${encodeURIComponent(account.address)}`
+      : "";
+    const validParam = user.signature?.valid
+      ? `&valid=${user.signature?.valid}`
+      : "";
+    const signatureParam = user.signature?.hex
+      ? `&signature=${encodeURIComponent(user.signature.hex)}`
+      : "";
+    const url = `RNCBSmartWallet://${addressParam}${signatureParam}${validParam}`;
+    console.log("url", url);
+    setAppUrl(url);
+  }, [account.address, user.signature?.valid, user.signature?.hex]);
 
   const promptToSign = () => {
     if (!account || !account.address) {
@@ -111,14 +140,6 @@ const Signer = () => {
     });
   };
 
-  const returnToApp = () => {
-    if (account.address && user.signature?.hex) {
-      const appUrl = `RNCBSmartWallet://address?address=${encodeURIComponent(account.address)}&signature=${encodeURIComponent(user.signature.hex)}`;
-      console.log("appUrl", appUrl);
-      window.location.href = appUrl;
-    }
-  };
-
   useEffect(() => {
     console.log("Account details:", { address, isConnecting, isConnected });
   }, [address, isConnecting, isConnected]);
@@ -128,89 +149,114 @@ const Signer = () => {
   }, [searchParams]);
 
   return (
-    <div>
-      <Card className="m-2">
-        <div className="flex flex-col sm:flex-row items-center p-4 pt-8">
-          <CardHeader>
-            <CardTitle>Sign-In With Ethereum</CardTitle>
-            <CardDescription>
-              Sign-in using Coinbase Smart Wallet!
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="items-center flex flex-col">
-            {user.signature ? (
-              <div className="flex flex-col gap-3">
-                <Button type="button" onClick={returnToApp}>
-                  Return to App
-                </Button>
-                <Button type="button" onClick={promptToSign}>
-                  SIWE
-                </Button>
-                <Button
-                  type="button"
-                  className="bg-amber-800 dark:bg-amber-500"
-                  onClick={handleDisconnect}
-                >
-                  Disconnect
-                </Button>
-              </div>
-            ) : (
-              <Button type="button" onClick={promptToSign}>
-                Sign-In With Ethereum
+    <Card
+      className={cn(
+        "m-2",
+        user.signature?.valid && "border-lime-500 bg-lime-50",
+      )}
+    >
+      <div className="flex flex-col sm:flex-row items-center p-4 pt-8">
+        <CardHeader>
+          <CardTitle className="text-center">
+            {account?.address && account?.status === "connected"
+              ? "Sign-In With Ethereum"
+              : "Connect Wallet"}
+          </CardTitle>
+          <CardDescription className="text-center">
+            {`Prove it's you with a signature.`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="items-center flex flex-col">
+          {user.signature?.hex ? (
+            <div className="flex flex-col gap-3">
+              <Button type="button" onClick={returnToApp}>
+                Return
               </Button>
-            )}
-          </CardContent>
-        </div>
-        <CardFooter className="flex flex-col gap-4">
-          <div className="flex flex-col items-center">
-            <Badge variant={"secondary"}>React Native Message:</Badge>
-            <p className="text-xs max-w-sm break-all">
-              {rnMessage ? rnMessage : ""}
-            </p>
-          </div>
-          <div className="flex flex-col items-center">
-            <Badge variant={"secondary"}>SIWE Message:</Badge>
-            <p className="text-xs max-w-sm break-all">
-              {siweMessage?.prepareMessage()
-                ? siweMessage.prepareMessage()
-                : ""}
-            </p>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="flex gap-2">
-              <Badge variant={"secondary"}>
-                Signature{" "}
-                {user.signature?.hex && (
-                  <div
-                    className={cn(
-                      "flex  gap-[2px] ml-2",
-                      user.signature?.valid === true
-                        ? "text-lime-800 dark:text-lime-500"
-                        : "text-red-800 dark:text-red-500",
-                    )}
-                  >
-                    <p className="text-xs">
-                      {user.signature?.valid === true ? "Valid" : "Invalid"}
-                    </p>
-                    {user.signature?.valid === true ? (
-                      <Check className="h-4 w-4 " />
-                    ) : (
-                      <X className="h-4 w-4 " />
-                    )}
-                  </div>
-                )}
-              </Badge>
+              <Button type="button" onClick={promptToSign}>
+                SIWE
+              </Button>
+              <Button
+                type="button"
+                className="bg-amber-800 dark:bg-amber-500"
+                onClick={handleDisconnect}
+              >
+                Disconnect
+              </Button>
             </div>
-            <p className="text-xs max-w-sm break-all mt-2">
-              Length: {user.signature?.hex ? user.signature.hex.length : ""}
-              <br />
-              {user.signature?.hex ? user.signature.hex : ""}
-            </p>
-          </div>
-        </CardFooter>
-      </Card>
-    </div>
+          ) : (
+            <Button type="button" onClick={promptToSign}>
+              {account?.status === "connected" ? "Sign-In" : "Connect"}
+            </Button>
+          )}
+        </CardContent>
+      </div>
+      <CardFooter className="flex flex-col gap-4">
+        <SignatureBadge signature={user.signature} />
+        {siweMessage && (
+          <MessageBadge
+            title="SIWE Message:"
+            message={siweMessage?.prepareMessage()}
+          />
+        )}
+        {rnMessage && (
+          <MessageBadge
+            title="React Native Message:"
+            message={rnMessage ?? ""}
+          />
+        )}
+      </CardFooter>
+    </Card>
   );
 };
+
+const MessageBadge = ({
+  title,
+  message,
+}: {
+  title: string;
+  message: string | undefined;
+}) => (
+  <div className="flex flex-col items-center">
+    <Badge variant={"secondary"}>{title}</Badge>
+    <p className="text-xs max-w-sm break-all">{message || ""}</p>
+  </div>
+);
+
+const SignatureBadge = ({
+  signature,
+}: {
+  signature: UserState["signature"];
+}) => (
+  <div className="flex flex-col items-center">
+    <div className="flex gap-2">
+      {signature?.hex && (
+        <Badge className={signature?.valid ? "bg-lime-500" : "bg-secondary"}>
+          <div
+            className={cn(
+              "flex gap-[2px] ml-1",
+              signature.valid
+                ? "text-lime-800 dark:text-lime-500"
+                : "text-red-800 dark:text-red-500",
+            )}
+          >
+            <p className="text-xs">{signature.valid ? "Valid" : "Invalid"}</p>
+            {signature.valid ? (
+              <Check className="h-4 w-4 " />
+            ) : (
+              <X className="h-4 w-4 " />
+            )}
+          </div>
+        </Badge>
+      )}
+    </div>
+    {signature?.hex && (
+      <p className="text-[10px] max-w-sm break-all mt-2 leading-[12px]">
+        Length: {signature?.hex ? signature.hex.length : ""}
+        <br />
+        {signature?.hex || ""}
+      </p>
+    )}
+  </div>
+);
 
 export default Signer;
