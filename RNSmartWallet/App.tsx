@@ -68,8 +68,8 @@ const App = () => {
   };
 
   const handleCreateButtonPress = () => {
-    const url = 'http://localhost:3000/create';
-    // const url = 'http://localhost:3000';
+    const url = 'http://localhost:3000/connect';
+    // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app';
     Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
@@ -82,7 +82,7 @@ const App = () => {
   };
 
   const handleSignButtonPress = () => {
-    // const url = 'http://localhost:3000/sign/{messageToSign}';
+    // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app/sign/{messageToSign}';
     const url = `http://localhost:3000/sign?message=${messageToSign}&address=${address}`;
     Linking.canOpenURL(url)
       .then(supported => {
