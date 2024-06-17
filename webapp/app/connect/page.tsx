@@ -64,7 +64,8 @@ export default function Create() {
         <Card
           className={cn(
             "m-2",
-            user.account.status === "connected" && "border-lime-500 bg-lime-50",
+            user.account.status === "connected" &&
+              "border-lime-500 bg-lime-50 dark:bg-lime-950",
           )}
         >
           <div className="flex flex-col sm:flex-row items-center p-4 pt-8">

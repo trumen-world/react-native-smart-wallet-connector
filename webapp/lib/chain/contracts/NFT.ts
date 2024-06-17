@@ -328,4 +328,13 @@ export const NFT = {
     ] as Abi,
     client: { public: client, wallet: walletClient },
   }),
+  mint: async (account: Address) => {
+    const { request } = await client.simulateContract({
+      account,
+      address: NFT.contract.address,
+      abi: NFT.contract.abi,
+      functionName: "mint",
+    });
+    await walletClient.writeContract(request);
+  },
 };

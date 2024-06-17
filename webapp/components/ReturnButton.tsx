@@ -8,9 +8,19 @@ const ReturnButton = ({ user }: { user: UserState }) => {
     if (!user.account?.address) {
       throw new Error("Missing address for iOS return!");
     }
-    const appUrl = `RNCBSmartWallet://address?address=${encodeURIComponent(user.account.address)}&signature=${user.signature?.hex ? encodeURIComponent(user.signature.hex) : ""}`;
-    console.log("appUrl", appUrl);
-    window.location.href = appUrl;
+    const addressParam = user.account.address
+      ? `?address=${encodeURIComponent(user.account.address)}`
+      : "";
+    const validParam = user.signature?.valid
+      ? `&valid=${user.signature?.valid}`
+      : "";
+    const signatureParam = user.signature?.hex
+      ? `&signature=${encodeURIComponent(user.signature.hex)}`
+      : "";
+    const url = `RNCBSmartWallet://${addressParam}${signatureParam}${validParam}`;
+
+    console.log("url", url);
+    window.location.href = url;
   };
   return (
     <Button type="button" onClick={returnToApp}>
