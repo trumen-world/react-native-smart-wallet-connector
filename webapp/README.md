@@ -5,6 +5,7 @@ Production URL: [TO BE DETERMINED](https://tbd.com)
 ---
 
 ![DEMO1](./public/smart-wallet-demo-1.png)
+![BATCH DEMO](./public/batch-demo.png)
 
 ---
 

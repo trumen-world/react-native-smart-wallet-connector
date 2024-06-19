@@ -1,0 +1,51 @@
+// "use client";
+
+// import Page from "@/components/Page";
+// import { useEffect } from "react";
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardFooter,
+//   CardHeader,
+//   CardTitle,
+// } from "@/components/ui/card";
+// import { Button } from "@/components/ui/button";
+// import { handleAppReturn } from "@/lib/utils";
+
+// export default function Error({
+//   error,
+//   reset,
+// }: {
+//   error: Error & { digest?: string };
+//   reset: () => void;
+// }) {
+//   useEffect(() => {
+//     // Log the error to an error reporting service
+//     console.error(error);
+//   }, [error]);
+
+//   return (
+//     <Page>
+//       <Card className="m-2">
+//         <CardHeader>
+//           <CardTitle className="text-red-500">SIGN ERROR</CardTitle>
+//           <CardDescription>
+//             Try again or return to React Native.
+//           </CardDescription>
+//         </CardHeader>
+//         <CardContent className="items-center flex flex-col gap-4 w-full">
+//           <Button
+//             onClick={
+//               // Attempt to recover by trying to re-render the segment
+//               () => reset()
+//             }
+//           >
+//             Try again
+//           </Button>
+//           <Button onClick={handleAppReturn}>Return to App</Button>
+//         </CardContent>
+//       </Card>
+//     </Page>
+//   );
+// }

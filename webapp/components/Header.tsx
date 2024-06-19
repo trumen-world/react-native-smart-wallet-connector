@@ -50,13 +50,27 @@ export default function Header() {
         </Link>
         <div className="flex gap-2 items-center mr-4">
           <Link href="/connect" className="text-lg font-semibold md:text-base">
-            <Badge className="rounded-lg hover:border-2  hover:border-primary hover:shadow-md border-2 border-transparent">
+            <Badge
+              variant={"outline"}
+              className="rounded-lg hover:border-2 hover:border-primary hover:shadow-md border-2 border-transparent"
+            >
               Create
             </Badge>
           </Link>
           <Link href="/sign" className="text-lg font-semibold md:text-base">
-            <Badge className="rounded-lg hover:border-2  hover:border-primary hover:shadow-md  border-2 border-transparent">
+            <Badge
+              variant={"outline"}
+              className="rounded-lg hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+            >
               SIWE
+            </Badge>
+          </Link>
+          <Link href="/batch" className="text-lg font-semibold md:text-base">
+            <Badge
+              variant={"outline"}
+              className="rounded-lg hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+            >
+              Batch
             </Badge>
           </Link>
         </div>
@@ -102,7 +116,10 @@ export default function Header() {
                   className="text-lg w-full flex font-semibold md:text-base"
                   onClick={sheetOnOpenChange}
                 >
-                  <Badge className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2  hover:border-primary hover:shadow-md  border-2 border-transparent">
+                  <Badge
+                    variant={"outline"}
+                    className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2  hover:border-primary hover:shadow-md  border-2 border-transparent"
+                  >
                     Connect
                   </Badge>
                 </Link>
@@ -111,8 +128,23 @@ export default function Header() {
                   className="text-lg w-full flex font-semibold md:text-base"
                   onClick={sheetOnOpenChange}
                 >
-                  <Badge className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent">
+                  <Badge
+                    variant={"outline"}
+                    className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                  >
                     SIWE
+                  </Badge>
+                </Link>
+                <Link
+                  href="/batch"
+                  className="text-lg w-full flex font-semibold md:text-base"
+                  onClick={sheetOnOpenChange}
+                >
+                  <Badge
+                    variant={"outline"}
+                    className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                  >
+                    Batch
                   </Badge>
                 </Link>
               </div>
