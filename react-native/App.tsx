@@ -16,16 +16,19 @@ import {
   TextInput,
 } from 'react-native';
 
-// type SectionProps = PropsWithChildren<{
-//   title: string;
-// }>;
+type AppState = {
+  address: string;
+  signature: {
+    hex: string;
+    valid: boolean;
+  };
+  message: string;
+};
 
 const App = () => {
-  const [address, setAddress] = useState<string>('');
-  const [signature, setSignature] = useState<string | null>(null);
-  const [messageToSign, onChangeText] = useState('');
+  const [state, setState] = useState<AppState | null>(null);
 
-  const handleDeepLink = (event: {url: any}) => {
+  const handleDeepLink = (event: {url: string}) => {
     console.log('event', event);
 
     const url = event.url;
@@ -33,17 +36,40 @@ const App = () => {
 
     const addressParam = getQueryParams(url).address;
     const signatureParam = getQueryParams(url).signature;
+    const isValidSignatureParam = getQueryParams(url).valid;
 
     if (addressParam) {
-      setAddress(addressParam);
-      console.log('address', addressParam);
-      // You can handle the address here (e.g., navigate to a specific screen)
+      setState(p => {
+        if (p === null) {
+          return {
+            address: addressParam,
+            signature: {
+              hex: signatureParam || '',
+              valid: isValidSignatureParam === 'true',
+            },
+            message: '',
+          };
+        } else {
+          return {
+            ...p,
+            address: addressParam,
+          };
+        }
+      });
+      console.log('address', state?.address);
     }
-    if (signatureParam) {
-      setSignature(signatureParam);
-      console.log('signatureParam', signatureParam);
-      // You can handle the address here (e.g., navigate to a specific screen)
+  };
+
+  const getQueryParams = (url: string) => {
+    const queryString = url.split('?')[1];
+    const params: {[key: string]: string} = {};
+    if (queryString) {
+      queryString.split('&').forEach(param => {
+        const [key, value] = param.split('=');
+        params[decodeURIComponent(key)] = decodeURIComponent(value);
+      });
     }
+    return params;
   };
 
   Linking.getInitialURL()
@@ -56,16 +82,6 @@ const App = () => {
     .catch(err => console.error('An error occurred', err));
 
   Linking.addEventListener('url', handleDeepLink);
-
-  const getQueryParams = (url: string): {[key: string]: string} => {
-    const params: {[key: string]: string} = {};
-    const regex = /[?&]([^=#]+)=([^&#]*)/g;
-    let match;
-    while ((match = regex.exec(url))) {
-      params[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
-    }
-    return params;
-  };
 
   const handleCreateButtonPress = () => {
     const url = 'http://localhost:3000/connect';
@@ -83,7 +99,7 @@ const App = () => {
 
   const handleSignButtonPress = () => {
     // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app/sign/{messageToSign}';
-    const url = `http://localhost:3000/sign?message=${messageToSign}&address=${address}`;
+    const url = `http://localhost:3000/sign?message=${state?.message}&address=${state?.address}`;
     Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
@@ -100,21 +116,42 @@ const App = () => {
       <TouchableOpacity style={styles.button} onPress={handleCreateButtonPress}>
         <Text style={styles.buttonText}>Create CB Smart Wallet</Text>
       </TouchableOpacity>
-      <Text>Address: {address}</Text>
+      <Text>Address: {state?.address}</Text>
       <View style={{height: 10}} />
 
       {/* A text input for user to enter the message to sign */}
       <TextInput
         style={{height: 40, borderColor: 'gray', borderWidth: 1}}
         placeholder="Enter message to sign"
-        onChangeText={onChangeText}
+        onChangeText={text =>
+          setState(p => {
+            if (p === null) {
+              return {
+                address: state?.address || '',
+                signature: {
+                  hex: state?.signature.hex || '',
+                  valid: state?.signature.valid || false,
+                },
+                message: state?.message || '',
+              };
+            } else {
+              return {
+                ...p,
+                message: text,
+              };
+            }
+          })
+        }
       />
       <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
         <Text style={styles.buttonText}>
           Sign the message with CB Smart Wallet
         </Text>
       </TouchableOpacity>
-      <Text style={styles.signature}>Signature: {signature}</Text>
+      <Text style={styles.signature}>Signature: {state?.signature.hex}</Text>
+      <Text style={styles.signature}>
+        Valid: {state?.signature.valid ? 'TRUE' : 'FALSE'}
+      </Text>
 
       {/* Handle NFT Minting */}
       {/* <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
