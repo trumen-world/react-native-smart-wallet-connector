@@ -1,13 +1,13 @@
 import Page from "@/components/Page";
 import SignerSkeleton from "@/components/SignerSkeleton";
-import TypedSigner from "@/components/TypedSigner";
+import SiweSigner from "@/components/SiweSigner";
 import { Suspense } from "react";
 
-export default async function Sign() {
+export default async function Siwe() {
   return (
     <Page>
       <Suspense fallback={<SignerSkeleton />}>
-        <TypedSigner />
+        <SiweSigner />
       </Suspense>
     </Page>
   );

@@ -37,11 +37,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
-import { useConnect, useDisconnect, UseAccountReturnType } from "wagmi";
+import { useConnect, useDisconnect, useAccount } from "wagmi";
 import { useEffect, useState } from "react";
-import useUser from "@/lib/hooks/use-user";
+import useUser, { UserState } from "@/lib/hooks/use-user";
 import { cn, getChainName } from "@/lib/utils";
 import { NULL_USER } from "@/lib/constants";
+import { coinbaseWallet } from "wagmi/connectors";
+import { Address } from "viem";
 
 const STATUS_COLORS = {
   connected: "bg-lime-600 dark:bg-lime-300",
@@ -54,14 +56,17 @@ const FormSchema = z.object({
   connector: z.string(),
 });
 
-export function ConnectSelect({
-  account,
-}: {
-  account: UseAccountReturnType | null;
-}) {
+export function ConnectSelect() {
   const { connectors, connect, error } = useConnect();
   const { disconnect } = useDisconnect();
   const [user, setUser] = useUser();
+  const account = useAccount();
+  const chainId = 84532;
+  const connector = coinbaseWallet({
+    appName: "Coinbase Smart Wallet w/ React Native",
+    preference: "smartWalletOnly",
+    chainId,
+  });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -80,61 +85,53 @@ export function ConnectSelect({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    const connector = connectors.find(
+  const onSubmit = (data: z.infer<typeof FormSchema>) => {
+    const selectedConnector = connectors.find(
       (connector) => connector.name === data.connector,
     );
-    if (connector) connect({ connector });
+    if (selectedConnector) {
+      connect({ connector: selectedConnector });
+    }
     setDialogOpen(false);
 
     toast({
       title: "Connecting with:",
       description: (
         <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">
-            {JSON.stringify(user.account?.address)}
-          </code>
+          <code className="text-white">{JSON.stringify(user.address)}</code>
         </pre>
       ),
     });
-  }
+  };
 
-  function handleJumpToRNApp() {
-    if (!account?.addresses) return;
+  const handleJumpToRNApp = () => {
+    if (!account.address) return;
 
-    const appUrl = `RNCBSmartWallet://address?address=${encodeURIComponent(account.addresses[0])}`;
+    const appUrl = `RNCBSmartWallet://address?address=${encodeURIComponent(account.address)}`;
     console.log("appUrl", appUrl);
     window.location.href = appUrl;
+  };
 
-    return;
-  }
-
-  function handleDisconnect() {
+  const handleDisconnect = () => {
     disconnect();
-    setUser({
-      account: null,
-      balance: null,
-      name: null,
-    });
+    setUser(NULL_USER);
     setDialogOpen(false);
-  }
+  };
 
-  function handleConnection() {
-    if (account?.status === "disconnected") {
-      setUser({
-        account,
-        balance: user.balance,
-        name: user.name,
-      });
-    } else if (account?.status === "connected") {
+  const handleConnection = () => {
+    if (!account.address) {
+      connect({ chainId, connector });
+      return;
+    } else if (account.isConnected) {
+      setUser((prevState: UserState) => ({
+        ...prevState,
+        address: account.address as Address,
+      }));
+    } else {
       setUser(NULL_USER);
     }
     setDialogOpen(true);
-  }
-
-  if (!account) {
-    throw new Error("No account");
-  }
+  };
 
   const transport = account.chainId ? getChainName(account.chainId) : null;
 
@@ -148,7 +145,7 @@ export function ConnectSelect({
               size="icon"
               className="bg-background border-2 rounded-full"
             >
-              {account.status === "connected" ? (
+              {account.isConnected ? (
                 <CircleUser className="h-5 w-5" />
               ) : (
                 <UserRoundX className="h-5 w-5" />
@@ -161,22 +158,22 @@ export function ConnectSelect({
             <DropdownMenuLabel>
               <div className="flex flex-col gap-2">
                 <p>My Account</p>
-                {account.status && (
-                  <div className="flex items-center gap-1">
-                    <div
-                      className={cn(
-                        STATUS_COLORS[account.status] || "",
-                        "h-2 w-2 rounded-full",
-                      )}
-                    />
-                    <span className="font-light text-xs flex items-center gap-1 capitalize">
-                      : {account.status}
-                    </span>
-                  </div>
-                )}
-                {account.addresses && (
+
+                <div className="flex items-center gap-1">
+                  <div
+                    className={cn(
+                      STATUS_COLORS[account.status] || "",
+                      "h-2 w-2 rounded-full",
+                    )}
+                  />
+                  <span className="font-light text-xs flex items-center gap-1 capitalize">
+                    : {account.status}
+                  </span>
+                </div>
+
+                {account.address && (
                   <p className="font-light text-xs overflow-clip">
-                    {account.addresses[0]}
+                    {account.address}
                   </p>
                 )}
 
@@ -187,7 +184,7 @@ export function ConnectSelect({
                 )}
               </div>
             </DropdownMenuLabel>
-            {account.addresses && (
+            {account.address && (
               <DropdownMenuItem onClick={handleJumpToRNApp}>
                 Back to App
               </DropdownMenuItem>
@@ -198,10 +195,10 @@ export function ConnectSelect({
               onClick={handleConnection}
               className={cn(
                 "mt-1",
-                account.status === "connected" ? "bg-red-700 text-white" : "",
+                account.isConnected ? "bg-red-700 text-white" : "",
               )}
             >
-              {account.status === "disconnected" ? (
+              {!account.isConnected ? (
                 <span>Connect</span>
               ) : (
                 <span>Disconnect</span>
@@ -211,7 +208,7 @@ export function ConnectSelect({
         </DropdownMenu>
 
         <DialogContent>
-          {user.account?.status === "disconnected" && (
+          {account.status === "disconnected" && (
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -238,7 +235,7 @@ export function ConnectSelect({
                           <SelectContent>
                             {connectors.map((connector) => (
                               <SelectItem
-                                key={connector.uid}
+                                key={connector.id}
                                 value={connector.name}
                               >
                                 {connector.name}
@@ -247,15 +244,13 @@ export function ConnectSelect({
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          {error && <>{error?.message}</>}
+                          {error && <>{error.message}</>}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <DialogDescription>
-                    {`Don't have a wallet? Get one here.`}
-                  </DialogDescription>
+                  <DialogDescription>{`Don't have a wallet? Get one here.`}</DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                   <Button type="submit">Connect</Button>
@@ -263,7 +258,7 @@ export function ConnectSelect({
               </form>
             </Form>
           )}
-          {user.account?.status === "connected" && (
+          {account.status === "connected" && (
             <div>
               <DialogHeader>
                 <DialogTitle>Are you sure you want to disconnect?</DialogTitle>

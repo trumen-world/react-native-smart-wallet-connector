@@ -107,7 +107,7 @@ Simulate contract write requests using the public client (READ) before using the
 ```typescript
 // component/Statistics.tsx
 const [user] = useUser();
-const handleRebase = async () => {
+const handleMint = async () => {
   const { request } = await client.simulateContract({
     account: user.account?.address,
     address: TRUMEN_NFT_CONTRACT.address,

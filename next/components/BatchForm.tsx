@@ -14,8 +14,6 @@ import {
 import { Transaction } from "@/lib/hooks/use-batch";
 import { useAccount } from "wagmi";
 import { useCallsStatus, useWriteContracts } from "wagmi/experimental";
-import { Input } from "./ui/input";
-import { parseAbi } from "viem";
 import { Fingerprint } from "lucide-react";
 
 const FormSchema = z.object({

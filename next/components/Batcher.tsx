@@ -22,7 +22,6 @@ import { Button } from "./ui/button";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { cn } from "@/lib/utils";
 import useUser, { UserState } from "@/lib/hooks/use-user";
-import { NULL_USER, CHAIN_OPTS as args } from "@/lib/constants";
 import { useWriteContracts, useCallsStatus } from "wagmi/experimental";
 import useBatch, { BatchState } from "@/lib/hooks/use-batch";
 import { z } from "zod";
@@ -62,9 +61,8 @@ const Batcher = () => {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
-      abi: [
-        parseAbiItem("function safeMint(address recipient) view returns ()"),
-      ],
+      abi: [""],
+      // TODO: Form can just have address, args and abi, no functionName input required -- that can be parsed from the abi
       functionName: "safeMint",
       args: [""],
     },

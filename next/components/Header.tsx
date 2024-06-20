@@ -11,6 +11,7 @@ import { useAccount } from "wagmi";
 import useUser, { UserState } from "@/lib/hooks/use-user";
 import { useEffect, useMemo, useState } from "react";
 import { Badge } from "./ui/badge";
+import { Address } from "viem";
 
 export default function Header() {
   const [user, setUser] = useUser();
@@ -22,15 +23,13 @@ export default function Header() {
   };
 
   useEffect(() => {
-    if (account.address && user.account?.address !== account.address) {
+    if (account.address) {
       setUser((prevUser: UserState) => ({
         ...prevUser,
-        account,
+        address: account.address as Address,
       }));
     }
-  }, [account.address, setUser, user.account, account]);
-
-  const userAccount = useMemo(() => account, [account]);
+  }, [account.address, setUser, user.address]);
 
   return (
     <header className="sticky top-0 z-50 flex w-full h-16 justify-between items-center gap-2 border-b bg-background/10 backdrop-blur-[1px] px-4 md:px-6">
@@ -57,7 +56,7 @@ export default function Header() {
               Create
             </Badge>
           </Link>
-          <Link href="/sign" className="text-lg font-semibold md:text-base">
+          <Link href="/siwe" className="text-lg font-semibold md:text-base">
             <Badge
               variant={"outline"}
               className="rounded-lg hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
@@ -124,7 +123,7 @@ export default function Header() {
                   </Badge>
                 </Link>
                 <Link
-                  href="/sign"
+                  href="/siwe"
                   className="text-lg w-full flex font-semibold md:text-base"
                   onClick={sheetOnOpenChange}
                 >
@@ -166,7 +165,7 @@ export default function Header() {
             </nav>
           </SheetContent>
         </Sheet>
-        <ConnectSelect account={userAccount} />
+        <ConnectSelect />
       </div>
       <div className="md:flex hidden">
         <ThemeToggle />

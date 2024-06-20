@@ -1,7 +1,6 @@
 "use client";
 import Page from "@/components/Page";
 import useUser, { type UserState } from "@/lib/hooks/use-user";
-import AppReturn from "@/components/AppReturn";
 import { useEffect, useState } from "react";
 import ConnectCard from "@/components/ConnectCard";
 import { useAccount, useDisconnect } from "wagmi";
@@ -18,10 +17,12 @@ import { Button } from "@/components/ui/button";
 import { NULL_USER } from "@/lib/constants";
 import ReturnButton from "@/components/ReturnButton";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 export default function Create() {
   const [appUrl, setAppUrl] = useState<string>();
   const [user, setUser] = useUser();
   const router = useRouter();
+  const { isConnected } = useAccount();
   const { disconnect } = useDisconnect({
     mutation: {
       onSettled() {
@@ -41,37 +42,37 @@ export default function Create() {
   };
 
   const routeToSIWE = () => {
-    router.replace(`${process.env.NEXT_PUBLIC_DOMAIN}/sign`);
+    router.replace(`/siwe`);
   };
 
   useEffect(() => {
-    console.log(user.account?.address);
-    if (user.account?.address) {
-      const APP_URL = `RNCBSmartWallet://?address=${encodeURIComponent(user.account.address)}`;
+    console.log(user.address);
+    if (user.address) {
+      const APP_URL = `RNCBSmartWallet://?address=${encodeURIComponent(user.address)}`;
       setAppUrl(APP_URL);
     }
-  }, [user.account?.address]);
+  }, [user.address]);
 
   useEffect(() => {
-    if (user.account?.status === "disconnected") {
+    if (isConnected === false) {
       setUser((prevState: UserState) => ({ ...prevState, account: null }));
     }
-  }, [user.account?.status, setUser]);
+  }, [isConnected, setUser]);
 
   return (
     <Page>
-      {user.account?.address && user.account.status === "connected" ? (
+      {user.address && isConnected === true ? (
         <Card
           className={cn(
             "m-2",
-            user.account.status === "connected" &&
+            isConnected === true &&
               "border-lime-500 bg-lime-50 dark:bg-lime-950",
           )}
         >
           <div className="flex flex-col sm:flex-row items-center p-4 pt-8">
             <CardHeader>
               <CardTitle className="text-center">
-                {user.account?.address && user.account?.status === "connected"
+                {user.address && isConnected === true
                   ? "Smart Wallet is Connected!"
                   : "Connect Wallet"}
               </CardTitle>
@@ -81,9 +82,11 @@ export default function Create() {
             </CardHeader>
             <CardContent className="items-center flex flex-col">
               <div className="flex flex-col gap-3">
-                <Button type="button" onClick={routeToSIWE}>
-                  SIWE
-                </Button>
+                <Link href="/siwe">
+                  <Button type="button" className="w-full">
+                    SIWE
+                  </Button>
+                </Link>
                 <ReturnButton user={user} />
                 <Button
                   type="button"

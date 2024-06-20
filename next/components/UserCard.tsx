@@ -19,7 +19,7 @@ export default function UserCard() {
             {user.name ?? "Matthew Pryor"}
           </h4>
           <p className="text-xs text-gray-500 dark:text-gray-400 max-w-[128px] truncate">
-            {user.account?.address}
+            {user.address}
           </p>
         </div>
       </div>

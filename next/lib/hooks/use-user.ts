@@ -1,9 +1,8 @@
 import { atom, useAtom } from "jotai";
-import { Hex } from "viem";
-import { UseAccountReturnType } from "wagmi";
+import { Address, Hex } from "viem";
 
 export type UserState = {
-  account: UseAccountReturnType | null;
+  address: Address | null;
   balance?: bigint | null;
   name?: string | null;
   signature?: {
@@ -13,7 +12,7 @@ export type UserState = {
 };
 
 const configAtom = atom<UserState>({
-  account: null,
+  address: null,
   balance: BigInt(0),
   name: null,
 });

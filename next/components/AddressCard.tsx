@@ -17,9 +17,7 @@ export default function AddressCard() {
             <div className="flex gap-1 items-center">
               <p className="text-secondary-foreground">Address</p>
             </div>
-            <p className="text-xs text-secondary-foreground">
-              {user.account?.address}
-            </p>
+            <p className="text-xs text-secondary-foreground">{user.address}</p>
           </div>
           <Copy />
         </div>

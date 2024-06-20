@@ -12,7 +12,6 @@ export const transports: TransportConfig = {
 export const config = createConfig({
   chains: [baseSepolia],
   connectors: [
-    // injected(),
     coinbaseWallet({
       appName: "Trumen World",
       preference: "smartWalletOnly",

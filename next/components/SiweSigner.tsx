@@ -21,13 +21,11 @@ import { createSiweMessage, generateSiweNonce } from "viem/siwe";
 import { client } from "@/lib/chain/viem";
 import { NULL_USER } from "@/lib/constants";
 
-const Signer = () => {
+const SiweSigner = () => {
   const [user, setUser] = useUser();
   const { address, isConnecting, isConnected } = useAccount();
   const [siweMessage, setSiweMessage] = useState<string | null>(null);
-  const [rnMessage, setRnMessage] = useState<string | null>(null);
   const [appUrl, setAppUrl] = useState<string | null>(null);
-  const searchParams = useSearchParams();
   const { disconnect } = useDisconnect({
     mutation: {
       onSettled() {
@@ -112,7 +110,7 @@ const Signer = () => {
     setAppUrl(url);
   }, [account.address, user.signature?.valid, user.signature?.hex]);
 
-  const promptToSign = () => {
+  const promptToSign = async () => {
     if (!account || !account.address) {
       handleConnect();
       return;
@@ -129,22 +127,20 @@ const Signer = () => {
       nonce: generateSiweNonce(),
     });
 
-    console.log(message);
     setSiweMessage(message);
-
-    signMessage({
-      account: account.address,
-      message,
-    });
+    try {
+      signMessage({
+        account: account.address,
+        message,
+      });
+    } catch (error) {
+      console.error("Error signing in with Ethereum:", error);
+    }
   };
 
   useEffect(() => {
     console.log("Account details:", { address, isConnecting, isConnected });
   }, [address, isConnecting, isConnected]);
-
-  useEffect(() => {
-    setRnMessage(searchParams.get("message"));
-  }, [searchParams]);
 
   return (
     <Card
@@ -192,12 +188,6 @@ const Signer = () => {
         <SignatureBadge signature={user.signature} />
         {siweMessage && (
           <MessageBadge title="SIWE Message:" message={siweMessage} />
-        )}
-        {rnMessage && (
-          <MessageBadge
-            title="React Native Message:"
-            message={rnMessage ?? ""}
-          />
         )}
       </CardFooter>
     </Card>
@@ -258,4 +248,4 @@ const SignatureBadge = ({
   </div>
 );
 
-export default Signer;
+export default SiweSigner;

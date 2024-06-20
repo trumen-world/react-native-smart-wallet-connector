@@ -5,11 +5,11 @@ import { Button } from "./ui/button";
 
 const ReturnButton = ({ user }: { user: UserState }) => {
   const returnToApp = () => {
-    if (!user.account?.address) {
+    if (!user.address) {
       throw new Error("Missing address for iOS return!");
     }
-    const addressParam = user.account.address
-      ? `?address=${encodeURIComponent(user.account.address)}`
+    const addressParam = user.address
+      ? `?address=${encodeURIComponent(user.address)}`
       : "";
     const validParam = user.signature?.valid
       ? `&valid=${user.signature?.valid}`
