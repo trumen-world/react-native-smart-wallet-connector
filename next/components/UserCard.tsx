@@ -16,7 +16,7 @@ export default function UserCard() {
         </Avatar>
         <div>
           <h4 className="text-sm font-semibold">
-            {user.name ?? "Matthew Pryor"}
+            {user.name ?? "Vitalik Buterin"}
           </h4>
           <p className="text-xs text-gray-500 dark:text-gray-400 max-w-[128px] truncate">
             {user.address}
