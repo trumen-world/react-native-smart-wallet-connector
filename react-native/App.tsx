@@ -5,7 +5,7 @@
  * @format
  */
 
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 // import type {PropsWithChildren} from 'react';
 import {
   View,
@@ -28,37 +28,25 @@ type AppState = {
 const App = () => {
   const [state, setState] = useState<AppState | null>(null);
 
-  const handleDeepLink = (event: {url: string}) => {
-    console.log('event', event);
+  const handleDeepLink = useCallback(({url}: {url: string}) => {
+    console.log('event', url);
 
-    const url = event.url;
-    console.log('url', url);
+    const {address, signature, valid} = getQueryParams(url);
+    setState({
+      address: address || '',
+      signature: {
+        hex: signature || '',
+        valid: valid === 'true' ? true : false,
+      },
+      message: 'N/A',
+    });
+  }, []);
 
-    const addressParam = getQueryParams(url).address;
-    const signatureParam = getQueryParams(url).signature;
-    const isValidSignatureParam = getQueryParams(url).valid;
+  useEffect(() => {
+    const sub = Linking.addEventListener('url', handleDeepLink);
 
-    if (addressParam) {
-      setState(p => {
-        if (p === null) {
-          return {
-            address: addressParam,
-            signature: {
-              hex: signatureParam || '',
-              valid: isValidSignatureParam === 'true',
-            },
-            message: '',
-          };
-        } else {
-          return {
-            ...p,
-            address: addressParam,
-          };
-        }
-      });
-      console.log('address', state?.address);
-    }
-  };
+    return () => sub.remove();
+  }, [handleDeepLink]);
 
   const getQueryParams = (url: string) => {
     const queryString = url.split('?')[1];
@@ -111,6 +99,20 @@ const App = () => {
       .catch(err => console.error('An error occurred', err));
   };
 
+  const handleSIWE = () => {
+    // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app/sign/{messageToSign}';
+    const url = 'http://localhost:3000/siwe';
+    Linking.canOpenURL(url)
+      .then(supported => {
+        if (supported) {
+          Linking.openURL(url);
+        } else {
+          console.log(`Don't know how to open URI: ${url}`);
+        }
+      })
+      .catch(err => console.error('An error occurred', err));
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.button} onPress={handleCreateButtonPress}>
@@ -147,6 +149,10 @@ const App = () => {
         <Text style={styles.buttonText}>
           Sign the message with CB Smart Wallet
         </Text>
+      </TouchableOpacity>
+      <View style={{height: 10}} />
+      <TouchableOpacity style={styles.button} onPress={handleSIWE}>
+        <Text style={styles.buttonText}>Sign-in with Ethereum</Text>
       </TouchableOpacity>
       <Text style={styles.signature}>Signature: {state?.signature.hex}</Text>
       <Text style={styles.signature}>
