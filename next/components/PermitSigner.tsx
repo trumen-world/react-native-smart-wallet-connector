@@ -11,14 +11,20 @@ import {
 } from "@/components/ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { useAccount, useConnect, useDisconnect, useSignTypedData } from "wagmi";
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useSignTypedData,
+  useVerifyTypedData,
+} from "wagmi";
 import { Check, X } from "lucide-react";
 import { cn, toDeadline } from "@/lib/utils";
 import useUser, { UserState } from "@/lib/hooks/use-user";
 import { coinbaseWallet } from "wagmi/connectors";
-import { client } from "@/lib/chain/viem";
-import { NULL_USER, domain, types } from "@/lib/constants";
-import { Address } from "viem";
+import { client, walletClient } from "@/lib/chain/viem";
+import { NULL_USER } from "@/lib/constants";
+import { Address, Hex } from "viem";
 import ms from "ms";
 import {
   AllowanceTransfer,
@@ -29,7 +35,6 @@ import {
 } from "@uniswap/permit2-sdk";
 import { useReadContract } from "wagmi";
 import { PERMIT } from "@/lib/chain/contracts/Permit";
-
 interface Permit extends PermitSingle {
   sigDeadline: number;
 }
@@ -71,32 +76,26 @@ const PermitSigner = () => {
   const { signTypedData } = useSignTypedData({
     mutation: {
       onSuccess: async (signature, { account, message }) => {
-        console.log("account", account);
+        console.log("user.address", user.address);
         console.log("message", message);
         console.log("signature", signature);
-        if (!account || !message) return;
-        // setUser((prevState: UserState) => ({
-        //   ...prevState,
-        //   signature: { hex: signature, valid: null },
-        // }));
-        // const valid = await client.verifyTypedData({
-        //   address: account as Address,
-        //   domain,
-        //   types,
-        //   primaryType: "PermitSingle",
-        //   message: message as Message,
-        //   signature,
-        // });
-        // console.log("valid:", valid);
+        if (!account || !message || !isConnected) return;
+
+        console.log("client", client);
+
         // setPermitMessage(JSON.stringify(message));
         setUser((prevState: UserState) => ({
           ...prevState,
-          signature: { hex: signature, valid: true },
+          signature: {
+            hex: signature,
+            valid: result.data ? result.data : null,
+          },
         }));
         console.log(user);
       },
     },
   });
+
   const { connect } = useConnect();
   const chainId: 84532 = 84532;
   const connector = coinbaseWallet({
@@ -135,22 +134,6 @@ const PermitSigner = () => {
     }
   };
 
-  useEffect(() => {
-    console.log("user.signature?.valid", user.signature?.valid);
-    const addressParam = address
-      ? `?address=${encodeURIComponent(address)}`
-      : "";
-    const validParam = user.signature?.valid
-      ? `&valid=${user.signature?.valid}`
-      : "";
-    const signatureParam = user.signature?.hex
-      ? `&signature=${encodeURIComponent(user.signature.hex)}`
-      : "";
-    const url = `RNCBSmartWallet://${addressParam}${signatureParam}${validParam}`;
-    console.log("url", url);
-    setAppUrl(url);
-  }, [address, user.signature?.valid, user.signature?.hex]);
-
   const { data: allowance } = useReadContract({
     abi: PERMIT.contract.abi,
     address: PERMIT.contract.address,
@@ -160,13 +143,17 @@ const PermitSigner = () => {
 
   const permit: Permit | undefined = useMemo(() => {
     if (!allowance) return;
-    console.log(allowance);
+    console.log("allowance", allowance);
+    console.log(
+      "Object.entries(allowance)[2][1]",
+      Object.entries(allowance)[2][1],
+    );
     return {
       details: {
         token: dummyToken,
         amount: BigInt(MaxAllowanceTransferAmount.toString()),
         expiration: toDeadline(PERMIT_EXPIRATION),
-        nonce: Object.keys(allowance)[2], // note only works once per account right now, would need to make dynamic
+        nonce: Object.entries(allowance)[2][1], // note only works once per account right now, would need to make dynamic
       },
       spender: dummySpender,
       sigDeadline: toDeadline(PERMIT_SIG_EXPIRATION),
@@ -178,6 +165,29 @@ const PermitSigner = () => {
     return AllowanceTransfer.getPermitData(permit, PERMIT2_ADDRESS, chainId);
   }, [permit, chainId]);
 
+  const result = useVerifyTypedData({
+    domain: permitData?.domain as Record<string, unknown>,
+    types: permitData?.types as any,
+    message: permitData?.values as any,
+    primaryType: "PermitSingle",
+    address: user.address as Address,
+    signature: user.signature?.hex as Hex,
+  });
+
+  useEffect(() => {
+    console.log("user.signature?.valid", user.signature?.valid);
+    const addressParam = address
+      ? `?address=${encodeURIComponent(address)}`
+      : "";
+    const validParam = user.signature?.valid ? `&valid=${result.data}` : "";
+    const signatureParam = user.signature?.hex
+      ? `&signature=${encodeURIComponent(user.signature.hex)}`
+      : "";
+    const url = `RNCBSmartWallet://${addressParam}${signatureParam}${validParam}`;
+    console.log("url", url);
+    setAppUrl(url);
+  }, [address, user.signature?.valid, user.signature?.hex, result?.data]);
+
   const promptToPermit = async () => {
     if (!address) {
       handleConnect();
@@ -187,7 +197,7 @@ const PermitSigner = () => {
     if (!permitData) throw new Error("No content for typed data");
     try {
       signTypedData({
-        account: address,
+        account: user.address as Address,
         connector: accConnector,
         domain: permitData.domain as Record<string, unknown>,
         types: permitData?.types,
@@ -201,13 +211,14 @@ const PermitSigner = () => {
 
   useEffect(() => {
     console.log("Account details:", { address, isConnecting, isConnected });
-  }, [address, isConnecting, isConnected]);
+    console.log(result.data);
+  }, [address, isConnecting, isConnected, result.data]);
 
   return (
     <Card
       className={cn(
         "m-2",
-        user.signature?.valid && "border-lime-500 bg-lime-50 dark:bg-lime-950",
+        result.data && "border-lime-500 bg-lime-50 dark:bg-lime-950",
       )}
     >
       <div className="flex flex-col sm:flex-row items-center p-4 pt-8">
@@ -246,7 +257,10 @@ const PermitSigner = () => {
         </CardContent>
       </div>
       <CardFooter className="flex flex-col gap-4">
-        <SignatureBadge signature={user.signature} />
+        <SignatureBadge
+          signature={user.signature}
+          valid={result.data ?? false}
+        />
         {permitMessage && (
           <MessageBadge
             title="Permit Message:"
@@ -273,8 +287,10 @@ const MessageBadge = ({
 
 const SignatureBadge = ({
   signature,
+  valid,
 }: {
   signature: UserState["signature"];
+  valid: boolean;
 }) => (
   <div className="flex flex-col items-center">
     <div className="flex gap-2">
@@ -282,23 +298,13 @@ const SignatureBadge = ({
         <Badge
           className={cn(
             "flex gap-[2px] ml-1",
-            signature.valid
+            valid
               ? "text-lime-50 dark:text-lime-950 bg-lime-700 dark:bg-lime-400"
               : "text-red-50 dark:text-red-950 bg-red-500 dark:hover:bg-red-5 00 dark:bg-red-400",
           )}
         >
-          <p className="text-xs">
-            {signature.valid !== null
-              ? signature.valid
-                ? "Valid"
-                : ""
-              : "Invalid"}
-          </p>
-          {signature.valid ? (
-            <Check className="h-4 w-4 " />
-          ) : (
-            <X className="h-4 w-4 " />
-          )}
+          <p className="text-xs">{valid ? "Valid" : "Invalid"}</p>
+          {valid ? <Check className="h-4 w-4 " /> : <X className="h-4 w-4 " />}
         </Badge>
       )}
     </div>
