@@ -87,52 +87,6 @@ const TypedSigner = () => {
     connector,
   };
 
-  // const sign = async () => {
-  //   if (!address) throw new Error("Mising sign params");
-  //   const signature: `0x${string}` = await walletClient.signTypedData({
-  //     account: address,
-  //     domain,
-  //     types,
-  //     primaryType: "Mail",
-  //     message: {
-  //       from: {
-  //         name: "Matt",
-  //         wallet: "0x0000000000000000000000000000000000000000",
-  //       },
-  //       to: {
-  //         name: "Bianca",
-  //         wallet: "0x0000000000000000000000000000000000000001",
-  //       },
-  //       contents: searchParams.get("message") || "Default Message",
-  //     },
-  //   });
-  //   const {
-  //     address: addr,
-  //     data,
-  //     signature: sig,
-  //   } = parseErc6492Signature(signature);
-  //   console.log("parseErc6492Signature(signature)", signature);
-  //   console.log("address", addr);
-  //   console.log("data", data);
-  //   const isValid = await client.verifyMessage({
-  //     address: address || "0x",
-  //     message: data,
-  //     signature: sig || "",
-  //   });
-  //   console.log("valid:", isValid);
-  //   setUser((prevState: UserState) => ({
-  //     ...prevState,
-  //     signature: { hex: signature, valid: isValid },
-  //   }));
-  // };
-  // const parsedSignature = useMemo(() => {
-  //   if (!user.signature?.hex) return;
-  //   const parsed = parseErc6492Signature(user.signature.hex).signature;
-  //   console.log("user.signature.hex", user.signature.hex);
-  //   console.log("parseErc6492Signature", parsed);
-  //   return parsed;
-  // }, [user.signature?.hex]);
-
   const handleDisconnect = () => {
     try {
       disconnect();
