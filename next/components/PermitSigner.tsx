@@ -179,7 +179,7 @@ const PermitSigner = () => {
     const addressParam = address
       ? `?address=${encodeURIComponent(address)}`
       : "";
-    const validParam = user.signature?.valid ? `&valid=${result.data}` : "";
+    const validParam = user.signature?.valid ? `&valid=${result?.data}` : "";
     const signatureParam = user.signature?.hex
       ? `&signature=${encodeURIComponent(user.signature.hex)}`
       : "";
@@ -208,6 +208,18 @@ const PermitSigner = () => {
       console.error("Error signing typed data:", error);
     }
   };
+
+  useEffect(() => {
+    if (result.data !== undefined) {
+      setUser((prevState: UserState) => ({
+        ...prevState,
+        signature: {
+          hex: prevState.signature!.hex,
+          valid: result.data,
+        },
+      }));
+    }
+  }, [result.data, setUser]);
 
   useEffect(() => {
     console.log("Account details:", { address, isConnecting, isConnected });
