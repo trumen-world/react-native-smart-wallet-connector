@@ -14,3 +14,7 @@ export function handleAppReturn() {
   const appUrl = `RNCBSmartWallet://`;
   window.location.href = appUrl;
 }
+
+export function toDeadline(expiration: number): number {
+  return Math.floor((Date.now() + expiration) / 1000);
+}

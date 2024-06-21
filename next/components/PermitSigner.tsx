@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -13,38 +13,53 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { useAccount, useConnect, useDisconnect, useSignTypedData } from "wagmi";
 import { Check, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, toDeadline } from "@/lib/utils";
 import useUser, { UserState } from "@/lib/hooks/use-user";
 import { coinbaseWallet } from "wagmi/connectors";
-import { useSearchParams } from "next/navigation";
 import { client } from "@/lib/chain/viem";
 import { NULL_USER, domain, types } from "@/lib/constants";
 import { Address } from "viem";
+import ms from "ms";
+import {
+  AllowanceTransfer,
+  MaxAllowanceTransferAmount,
+  PERMIT2_ADDRESS,
+  PermitDetails,
+  type PermitSingle,
+} from "@uniswap/permit2-sdk";
+import { useReadContract } from "wagmi";
+import { PERMIT } from "@/lib/chain/contracts/Permit";
+
+interface Permit extends PermitSingle {
+  sigDeadline: number;
+}
+
+export interface PermitSignature extends Permit {
+  signature: string;
+}
 
 type Message = {
-  from: {
-    name: string;
-    wallet: Address;
-  };
-  to: {
-    name: string;
-    wallet: Address;
-  };
-  contents: string;
+  details: PermitDetails;
+  spender: string;
+  sigDeadline: bigint;
 };
 
-const TypedSigner = () => {
+const PERMIT_EXPIRATION = ms(`30d`);
+const PERMIT_SIG_EXPIRATION = ms(`30m`);
+
+const PermitSigner = () => {
   const [user, setUser] = useUser();
+  const dummyToken = "0x0000000000000000000000000000000000000B0b";
+  const dummySpender = "0x0000000000000000000000000000000000000B0b";
   const {
     address,
     isConnecting,
     isConnected,
     connector: accConnector,
   } = useAccount();
-  const [rnMessage, setRnMessage] = useState<string | null>(null);
+  const [permitMessage, setPermitMessage] = useState<string | null>(null);
   const [appUrl, setAppUrl] = useState<string | null>(null);
 
-  const searchParams = useSearchParams();
   const { disconnect } = useDisconnect({
     mutation: {
       onSettled() {
@@ -52,27 +67,33 @@ const TypedSigner = () => {
       },
     },
   });
+
   const { signTypedData } = useSignTypedData({
     mutation: {
       onSuccess: async (signature, { account, message }) => {
         console.log("account", account);
         console.log("message", message);
         console.log("signature", signature);
-        if (!account || !message)
-          throw new Error("Missing verification params");
-        const valid = await client.verifyTypedData({
-          address: account as Address,
-          domain,
-          types,
-          primaryType: "Mail",
-          message: message as Message,
-          signature,
-        });
-        console.log("valid:", valid);
+        if (!account || !message) return;
+        // setUser((prevState: UserState) => ({
+        //   ...prevState,
+        //   signature: { hex: signature, valid: null },
+        // }));
+        // const valid = await client.verifyTypedData({
+        //   address: account as Address,
+        //   domain,
+        //   types,
+        //   primaryType: "PermitSingle",
+        //   message: message as Message,
+        //   signature,
+        // });
+        // console.log("valid:", valid);
+        // setPermitMessage(JSON.stringify(message));
         setUser((prevState: UserState) => ({
           ...prevState,
-          signature: { hex: signature, valid: valid },
+          signature: { hex: signature, valid: true },
         }));
+        console.log(user);
       },
     },
   });
@@ -91,7 +112,7 @@ const TypedSigner = () => {
   const handleDisconnect = () => {
     try {
       disconnect();
-      setRnMessage(null);
+      setPermitMessage(null);
       setUser(NULL_USER);
     } catch (err) {
       console.error("Disonnection failed", err);
@@ -115,6 +136,7 @@ const TypedSigner = () => {
   };
 
   useEffect(() => {
+    console.log("user.signature?.valid", user.signature?.valid);
     const addressParam = address
       ? `?address=${encodeURIComponent(address)}`
       : "";
@@ -129,32 +151,48 @@ const TypedSigner = () => {
     setAppUrl(url);
   }, [address, user.signature?.valid, user.signature?.hex]);
 
-  const promptToSign = async () => {
+  const { data: allowance } = useReadContract({
+    abi: PERMIT.contract.abi,
+    address: PERMIT.contract.address,
+    functionName: "allowance",
+    args: [address!, dummyToken, dummySpender],
+  });
+
+  const permit: Permit | undefined = useMemo(() => {
+    if (!allowance) return;
+    console.log(allowance);
+    return {
+      details: {
+        token: dummyToken,
+        amount: BigInt(MaxAllowanceTransferAmount.toString()),
+        expiration: toDeadline(PERMIT_EXPIRATION),
+        nonce: Object.keys(allowance)[2], // note only works once per account right now, would need to make dynamic
+      },
+      spender: dummySpender,
+      sigDeadline: toDeadline(PERMIT_SIG_EXPIRATION),
+    };
+  }, [allowance]);
+
+  const permitData = useMemo(() => {
+    if (!permit) return;
+    return AllowanceTransfer.getPermitData(permit, PERMIT2_ADDRESS, chainId);
+  }, [permit, chainId]);
+
+  const promptToPermit = async () => {
     if (!address) {
       handleConnect();
       return;
     }
-    const contents = searchParams.get("message");
 
-    if (!contents) throw new Error("No content for typed data");
+    if (!permitData) throw new Error("No content for typed data");
     try {
       signTypedData({
         account: address,
         connector: accConnector,
-        domain,
-        types,
-        message: {
-          from: {
-            name: "Bob",
-            wallet: "0x0000000000000000000000000000000000000000" as Address,
-          },
-          to: {
-            name: "Alice",
-            wallet: "0x0000000000000000000000000000000000000001" as Address,
-          },
-          contents,
-        } as Message,
-        primaryType: "Mail",
+        domain: permitData.domain as Record<string, unknown>,
+        types: permitData?.types,
+        message: permitData.values as any,
+        primaryType: "PermitSingle",
       });
     } catch (error) {
       console.error("Error signing typed data:", error);
@@ -164,10 +202,6 @@ const TypedSigner = () => {
   useEffect(() => {
     console.log("Account details:", { address, isConnecting, isConnected });
   }, [address, isConnecting, isConnected]);
-
-  useEffect(() => {
-    setRnMessage(searchParams.get("message"));
-  }, [searchParams]);
 
   return (
     <Card
@@ -180,7 +214,7 @@ const TypedSigner = () => {
         <CardHeader>
           <CardTitle className="text-center">
             {typeof user.address !== null
-              ? "Sign Typed Data"
+              ? "Sign Contract Permission"
               : "Connect Wallet"}
           </CardTitle>
           <CardDescription className="text-center">
@@ -193,8 +227,8 @@ const TypedSigner = () => {
               <Button type="button" onClick={returnToApp}>
                 Return
               </Button>
-              <Button type="button" onClick={promptToSign}>
-                Sign
+              <Button type="button" onClick={promptToPermit}>
+                Permit
               </Button>
               <Button
                 type="button"
@@ -205,18 +239,18 @@ const TypedSigner = () => {
               </Button>
             </div>
           ) : (
-            <Button type="button" onClick={promptToSign}>
-              {typeof user.address !== null ? "Sign" : "Connect"}
+            <Button type="button" onClick={promptToPermit}>
+              {typeof user.address !== null ? "Permit" : "Connect"}
             </Button>
           )}
         </CardContent>
       </div>
       <CardFooter className="flex flex-col gap-4">
         <SignatureBadge signature={user.signature} />
-        {rnMessage && (
+        {permitMessage && (
           <MessageBadge
-            title="React Native Message:"
-            message={rnMessage ?? ""}
+            title="Permit Message:"
+            message={permitMessage ?? "N/A"}
           />
         )}
       </CardFooter>
@@ -246,25 +280,25 @@ const SignatureBadge = ({
     <div className="flex gap-2">
       {signature?.hex && (
         <Badge
-          className={
-            signature?.valid ? "bg-lime-700 dark:bg-lime-400" : "bg-red-500"
-          }
+          className={cn(
+            "flex gap-[2px] ml-1",
+            signature.valid
+              ? "text-lime-50 dark:text-lime-950 bg-lime-700 dark:bg-lime-400"
+              : "text-red-50 dark:text-red-950 bg-red-500 dark:hover:bg-red-5 00 dark:bg-red-400",
+          )}
         >
-          <div
-            className={cn(
-              "flex gap-[2px] ml-1",
-              signature.valid
-                ? "text-lime-50 dark:text-lime-950"
-                : "text-red-800 dark:text-red-500",
-            )}
-          >
-            <p className="text-xs">{signature.valid ? "Valid" : "Invalid"}</p>
-            {signature.valid ? (
-              <Check className="h-4 w-4 " />
-            ) : (
-              <X className="h-4 w-4 " />
-            )}
-          </div>
+          <p className="text-xs">
+            {signature.valid !== null
+              ? signature.valid
+                ? "Valid"
+                : ""
+              : "Invalid"}
+          </p>
+          {signature.valid ? (
+            <Check className="h-4 w-4 " />
+          ) : (
+            <X className="h-4 w-4 " />
+          )}
         </Badge>
       )}
     </div>
@@ -278,4 +312,4 @@ const SignatureBadge = ({
   </div>
 );
 
-export default TypedSigner;
+export default PermitSigner;

@@ -5,7 +5,16 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { ThemeToggleMobile } from "./ThemeToggleMobile";
-import { Menu, Wallet } from "lucide-react";
+import {
+  Diamond,
+  Fingerprint,
+  Key,
+  LockKeyholeOpen,
+  Menu,
+  PackagePlus,
+  ScanFace,
+  Wallet,
+} from "lucide-react";
 import { ConnectSelect } from "./ConnectSelect";
 import { useAccount } from "wagmi";
 import useUser, { UserState } from "@/lib/hooks/use-user";
@@ -47,29 +56,45 @@ export default function Header() {
             Coinbase Smart Wallet with React Native
           </span>
         </Link>
-        <div className="flex gap-2 items-center mr-4">
+        <div className="flex gap-1 items-center mr-4">
           <Link href="/connect" className="text-lg font-semibold md:text-base">
             <Badge
-              variant={"outline"}
-              className="rounded-lg hover:border-2 hover:border-primary hover:shadow-md border-2 border-transparent"
+              variant={"secondary"}
+              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md border-2 border-transparent"
             >
-              Create
+              Connect <ScanFace className="h-3 w-3" />
             </Badge>
           </Link>
           <Link href="/siwe" className="text-lg font-semibold md:text-base">
             <Badge
-              variant={"outline"}
-              className="rounded-lg hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+              variant={"secondary"}
+              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md  border-2 border-transparent"
             >
-              SIWE
+              SIWE <Diamond className="h-3 w-3" />
+            </Badge>
+          </Link>
+          <Link href="/sign" className="text-lg font-semibold md:text-base">
+            <Badge
+              variant={"secondary"}
+              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md  border-2 border-transparent"
+            >
+              Sign <Fingerprint className="h-3 w-3" />
             </Badge>
           </Link>
           <Link href="/batch" className="text-lg font-semibold md:text-base">
             <Badge
-              variant={"outline"}
-              className="rounded-lg hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+              variant={"secondary"}
+              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md  border-2 border-transparent"
             >
-              Batch
+              Batch <PackagePlus className="h-3 w-3" />
+            </Badge>
+          </Link>
+          <Link href="/permit" className="text-lg font-semibold md:text-base">
+            <Badge
+              variant={"secondary"}
+              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md  border-2 border-transparent"
+            >
+              Permit <LockKeyholeOpen className="h-3 w-3" />
             </Badge>
           </Link>
         </div>
@@ -84,7 +109,7 @@ export default function Header() {
           CBSWRN
         </p>
       </Link>
-      <div className="flex gap-2">
+      <div className="flex gap-1">
         <Sheet open={sheetOpen} onOpenChange={sheetOnOpenChange}>
           <SheetTrigger asChild>
             <Button
@@ -117,9 +142,9 @@ export default function Header() {
                 >
                   <Badge
                     variant={"outline"}
-                    className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2  hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2  hover:border-primary hover:shadow-md  border-2 border-transparent"
                   >
-                    Connect
+                    Connect <ScanFace className="h-4 w-4" />
                   </Badge>
                 </Link>
                 <Link
@@ -129,9 +154,21 @@ export default function Header() {
                 >
                   <Badge
                     variant={"outline"}
-                    className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
                   >
-                    SIWE
+                    SIWE <Diamond className="h-4 w-4" />
+                  </Badge>
+                </Link>
+                <Link
+                  href="/sign"
+                  className="text-lg w-full flex font-semibold md:text-base"
+                  onClick={sheetOnOpenChange}
+                >
+                  <Badge
+                    variant={"outline"}
+                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                  >
+                    Sign <Fingerprint className="h-4 w-4" />
                   </Badge>
                 </Link>
                 <Link
@@ -141,9 +178,21 @@ export default function Header() {
                 >
                   <Badge
                     variant={"outline"}
-                    className="rounded-lg text-base w-1/2 text-center items-center flex flex-col hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
                   >
-                    Batch
+                    Batch <PackagePlus className="h-4 w-4" />
+                  </Badge>
+                </Link>
+                <Link
+                  href="/permit"
+                  className="text-lg w-full flex font-semibold md:text-base"
+                  onClick={sheetOnOpenChange}
+                >
+                  <Badge
+                    variant={"outline"}
+                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                  >
+                    Permit <LockKeyholeOpen className="h-4 w-4" />
                   </Badge>
                 </Link>
               </div>
