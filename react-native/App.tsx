@@ -60,17 +60,6 @@ const App = () => {
     return params;
   };
 
-  Linking.getInitialURL()
-    .then(url => {
-      if (url) {
-        console.log('Initial URL:', url);
-        handleDeepLink({url});
-      }
-    })
-    .catch(err => console.error('An error occurred', err));
-
-  Linking.addEventListener('url', handleDeepLink);
-
   const handleCreateButtonPress = () => {
     const url = 'http://localhost:3000/connect';
     // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app';
@@ -113,6 +102,24 @@ const App = () => {
       .catch(err => console.error('An error occurred', err));
   };
 
+  const handlePermit = () => {
+    // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app/sign/{messageToSign}';
+    const url = 'http://localhost:3000/permit';
+    Linking.canOpenURL(url)
+      .then(supported => {
+        if (supported) {
+          Linking.openURL(url);
+        } else {
+          console.log(`Don't know how to open URI: ${url}`);
+        }
+      })
+      .catch(err => console.error('An error occurred', err));
+  };
+
+  useEffect(() => {
+    console.log('State:', {state});
+  }, [state]);
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.button} onPress={handleCreateButtonPress}>
@@ -146,14 +153,17 @@ const App = () => {
         }
       />
       <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
-        <Text style={styles.buttonText}>
-          Sign the message with CB Smart Wallet
-        </Text>
+        <Text style={styles.buttonText}>Sign Message</Text>
       </TouchableOpacity>
       <View style={{height: 10}} />
       <TouchableOpacity style={styles.button} onPress={handleSIWE}>
         <Text style={styles.buttonText}>Sign-in with Ethereum</Text>
       </TouchableOpacity>
+      <View style={{height: 10}} />
+      <TouchableOpacity style={styles.button} onPress={handlePermit}>
+        <Text style={styles.buttonText}>Sign Permission</Text>
+      </TouchableOpacity>
+      <View style={{height: 10}} />
       <Text style={styles.signature}>Signature: {state?.signature.hex}</Text>
       <Text style={styles.signature}>
         Valid: {state?.signature.valid ? 'TRUE' : 'FALSE'}
