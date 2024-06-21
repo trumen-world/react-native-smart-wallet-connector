@@ -23,7 +23,7 @@ const ReturnButton = ({ user }: { user: UserState }) => {
     window.location.href = url;
   };
   return (
-    <Button type="button" onClick={returnToApp}>
+    <Button variant={"link"} type="button" onClick={returnToApp}>
       Return to iOS
     </Button>
   );

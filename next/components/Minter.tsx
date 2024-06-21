@@ -106,7 +106,7 @@ const Minter = () => {
         <CardContent className="items-center flex flex-col">
           {user.signature?.hex ? (
             <div className="flex flex-col gap-3">
-              <Button type="button" onClick={returnToApp}>
+              <Button variant={"secondary"} type="button" onClick={returnToApp}>
                 Return
               </Button>
               <Button type="button" onClick={promptToMint}>

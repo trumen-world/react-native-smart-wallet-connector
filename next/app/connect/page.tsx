@@ -18,6 +18,13 @@ import { NULL_USER } from "@/lib/constants";
 import ReturnButton from "@/components/ReturnButton";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  Diamond,
+  Fingerprint,
+  LockKeyholeOpen,
+  PackagePlus,
+  ScanFace,
+} from "lucide-react";
 export default function Create() {
   const [appUrl, setAppUrl] = useState<string>();
   const [user, setUser] = useUser();
@@ -30,16 +37,6 @@ export default function Create() {
       },
     },
   });
-
-  const handleDisconnect = () => {
-    try {
-      disconnect();
-      setAppUrl("");
-      setUser(NULL_USER);
-    } catch (err) {
-      console.error("Disonnection failed", err);
-    }
-  };
 
   const routeToSIWE = () => {
     router.replace(`/siwe`);
@@ -82,19 +79,64 @@ export default function Create() {
             </CardHeader>
             <CardContent className="items-center flex flex-col">
               <div className="flex flex-col gap-3">
-                <Link href="/siwe">
-                  <Button type="button" className="w-full">
-                    SIWE
-                  </Button>
-                </Link>
                 <ReturnButton user={user} />
-                <Button
-                  type="button"
-                  className="bg-amber-800 dark:bg-amber-500"
-                  onClick={handleDisconnect}
-                >
-                  Disconnect
-                </Button>
+                <div className="flex gap-2 items-center w-full">
+                  <Link
+                    href="/connect"
+                    className="text-lg w-full flex font-semibold md:text-base"
+                  >
+                    <Button
+                      variant={"outline"}
+                      className="rounded-lg text-base text-center flex gap-1 hover:border-2  hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    >
+                      <ScanFace className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/siwe"
+                    className="text-lg w-full flex font-semibold md:text-base"
+                  >
+                    <Button
+                      variant={"outline"}
+                      className="rounded-lg text-base text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    >
+                      <Diamond className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/sign"
+                    className="text-lg w-full flex font-semibold md:text-base"
+                  >
+                    <Button
+                      variant={"outline"}
+                      className="rounded-lg text-base text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    >
+                      <Fingerprint className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/batch"
+                    className="text-lg w-full flex font-semibold md:text-base"
+                  >
+                    <Button
+                      variant={"outline"}
+                      className="rounded-lg text-base text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    >
+                      <PackagePlus className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/permit"
+                    className="text-lg w-full flex font-semibold md:text-base"
+                  >
+                    <Button
+                      variant={"outline"}
+                      className="rounded-lg text-base text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    >
+                      <LockKeyholeOpen className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </div>

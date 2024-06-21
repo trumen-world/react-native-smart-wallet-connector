@@ -14,7 +14,6 @@ import { Badge } from "./ui/badge";
 import {
   useAccount,
   useConnect,
-  useDisconnect,
   useSignTypedData,
   useVerifyTypedData,
 } from "wagmi";
@@ -22,19 +21,19 @@ import { Check, X } from "lucide-react";
 import { cn, toDeadline } from "@/lib/utils";
 import useUser, { UserState } from "@/lib/hooks/use-user";
 import { coinbaseWallet } from "wagmi/connectors";
-import { client, walletClient } from "@/lib/chain/viem";
-import { NULL_USER } from "@/lib/constants";
+import { client } from "@/lib/chain/viem";
 import { Address, Hex } from "viem";
 import ms from "ms";
 import {
   AllowanceTransfer,
   MaxAllowanceTransferAmount,
   PERMIT2_ADDRESS,
-  PermitDetails,
   type PermitSingle,
 } from "@uniswap/permit2-sdk";
 import { useReadContract } from "wagmi";
 import { PERMIT } from "@/lib/chain/contracts/Permit";
+import { parseErc6492Signature } from "viem/experimental";
+import { useWriteContracts } from "wagmi/experimental";
 interface Permit extends PermitSingle {
   sigDeadline: number;
 }
@@ -42,12 +41,6 @@ interface Permit extends PermitSingle {
 export interface PermitSignature extends Permit {
   signature: string;
 }
-
-type Message = {
-  details: PermitDetails;
-  spender: string;
-  sigDeadline: bigint;
-};
 
 const PERMIT_EXPIRATION = ms(`30d`);
 const PERMIT_SIG_EXPIRATION = ms(`30m`);
@@ -64,14 +57,6 @@ const PermitSigner = () => {
   } = useAccount();
   const [permitMessage, setPermitMessage] = useState<string | null>(null);
   const [appUrl, setAppUrl] = useState<string | null>(null);
-
-  const { disconnect } = useDisconnect({
-    mutation: {
-      onSettled() {
-        setUser(NULL_USER);
-      },
-    },
-  });
 
   const { signTypedData } = useSignTypedData({
     mutation: {
@@ -108,15 +93,6 @@ const PermitSigner = () => {
     connector,
   };
 
-  const handleDisconnect = () => {
-    try {
-      disconnect();
-      setPermitMessage(null);
-      setUser(NULL_USER);
-    } catch (err) {
-      console.error("Disonnection failed", err);
-    }
-  };
   const handleConnect = () => {
     try {
       connect({ ...args });
@@ -208,6 +184,26 @@ const PermitSigner = () => {
       console.error("Error signing typed data:", error);
     }
   };
+  const parsedSignature = useMemo(() => {
+    if (!user.signature?.hex) return;
+
+    return parseErc6492Signature(user.signature?.hex).signature;
+  }, [user.signature?.hex]);
+
+  const { writeContracts } = useWriteContracts();
+
+  const writePermit = () => {
+    writeContracts({
+      contracts: [
+        {
+          address: PERMIT.contract.address,
+          abi: PERMIT.contract.abi,
+          functionName: "permit",
+          args: [user.address, permitData!.values, parsedSignature],
+        },
+      ],
+    });
+  };
 
   useEffect(() => {
     if (result.data !== undefined) {
@@ -247,23 +243,23 @@ const PermitSigner = () => {
         <CardContent className="items-center flex flex-col">
           {user.signature?.hex ? (
             <div className="flex flex-col gap-3">
-              <Button type="button" onClick={returnToApp}>
-                Return
-              </Button>
-              <Button type="button" onClick={promptToPermit}>
-                Permit
+              <Button variant={"link"} type="button" onClick={returnToApp}>
+                Return to iOS
               </Button>
               <Button
+                variant={"secondary"}
                 type="button"
-                className="bg-amber-800 dark:bg-amber-500"
-                onClick={handleDisconnect}
+                onClick={promptToPermit}
               >
-                Disconnect
+                Re-Sign
+              </Button>
+              <Button type="button" onClick={writePermit}>
+                Permit
               </Button>
             </div>
           ) : (
             <Button type="button" onClick={promptToPermit}>
-              {typeof user.address !== null ? "Permit" : "Connect"}
+              {typeof user.address !== null ? "Sign" : "Connect"}
             </Button>
           )}
         </CardContent>

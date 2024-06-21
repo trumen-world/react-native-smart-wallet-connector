@@ -16,23 +16,15 @@ import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useUser, { UserState } from "@/lib/hooks/use-user";
 import { coinbaseWallet } from "wagmi/connectors";
-import { useSearchParams } from "next/navigation";
 import { createSiweMessage, generateSiweNonce } from "viem/siwe";
 import { client } from "@/lib/chain/viem";
-import { NULL_USER } from "@/lib/constants";
+import SignatureBadge from "./SignatureBadge";
 
 const SiweSigner = () => {
   const [user, setUser] = useUser();
   const { address, isConnecting, isConnected } = useAccount();
   const [siweMessage, setSiweMessage] = useState<string | null>(null);
   const [appUrl, setAppUrl] = useState<string | null>(null);
-  const { disconnect } = useDisconnect({
-    mutation: {
-      onSettled() {
-        setUser(NULL_USER);
-      },
-    },
-  });
   const { connect } = useConnect();
   const account = useAccount();
   const chainId: 84532 = 84532;
@@ -69,15 +61,6 @@ const SiweSigner = () => {
     },
   });
 
-  const handleDisconnect = () => {
-    try {
-      disconnect();
-      setSiweMessage(null);
-      setUser(NULL_USER);
-    } catch (err) {
-      console.error("Disonnection failed", err);
-    }
-  };
   const handleConnect = () => {
     try {
       connect({ ...args });
@@ -163,18 +146,15 @@ const SiweSigner = () => {
         <CardContent className="items-center flex flex-col">
           {user.signature?.hex ? (
             <div className="flex flex-col gap-3">
-              <Button type="button" onClick={returnToApp}>
-                Return
-              </Button>
-              <Button type="button" onClick={promptToSign}>
-                SIWE
+              <Button variant={"link"} type="button" onClick={returnToApp}>
+                Return to iOS
               </Button>
               <Button
+                variant={"secondary"}
                 type="button"
-                className="bg-amber-800 dark:bg-amber-500"
-                onClick={handleDisconnect}
+                onClick={promptToSign}
               >
-                Disconnect
+                Re-Sign
               </Button>
             </div>
           ) : (
@@ -204,47 +184,6 @@ const MessageBadge = ({
   <div className="flex flex-col items-center">
     <Badge variant={"secondary"}>{title}</Badge>
     <p className="text-xs max-w-sm break-all">{message || ""}</p>
-  </div>
-);
-
-const SignatureBadge = ({
-  signature,
-}: {
-  signature: UserState["signature"];
-}) => (
-  <div className="flex flex-col items-center">
-    <div className="flex gap-2">
-      {signature?.hex && (
-        <Badge
-          className={
-            signature?.valid ? "bg-lime-700 dark:bg-lime-400" : "bg-red-500"
-          }
-        >
-          <div
-            className={cn(
-              "flex gap-[2px] ml-1",
-              signature.valid
-                ? "text-lime-50 dark:text-lime-950"
-                : "text-red-800 dark:text-red-500",
-            )}
-          >
-            <p className="text-xs">{signature.valid ? "Valid" : "Invalid"}</p>
-            {signature.valid ? (
-              <Check className="h-4 w-4 " />
-            ) : (
-              <X className="h-4 w-4 " />
-            )}
-          </div>
-        </Badge>
-      )}
-    </div>
-    {signature?.hex && (
-      <p className="text-[10px] max-w-sm break-all mt-2 leading-[12px]">
-        Length: {signature?.hex ? signature.hex.length : ""}
-        <br />
-        {signature?.hex || ""}
-      </p>
-    )}
   </div>
 );
 
