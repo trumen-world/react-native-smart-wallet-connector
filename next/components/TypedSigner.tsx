@@ -11,29 +11,38 @@ import {
 } from "@/components/ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import {
-  useAccount,
-  useConnect,
-  useDisconnect,
-  useSignMessage,
-  useSignTypedData,
-} from "wagmi";
+import { useAccount, useConnect, useDisconnect, useSignTypedData } from "wagmi";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useUser, { UserState } from "@/lib/hooks/use-user";
 import { coinbaseWallet } from "wagmi/connectors";
 import { useSearchParams } from "next/navigation";
-import { createSiweMessage, generateSiweNonce } from "viem/siwe";
-import { client, walletClient } from "@/lib/chain/viem";
+import { client } from "@/lib/chain/viem";
 import { NULL_USER, domain, types } from "@/lib/constants";
-import { parseErc6492Signature } from "viem/experimental";
 import { Address } from "viem";
 
+type Message = {
+  from: {
+    name: string;
+    wallet: Address;
+  };
+  to: {
+    name: string;
+    wallet: Address;
+  };
+  contents: string;
+};
 const TypedSigner = () => {
   const [user, setUser] = useUser();
-  const { address, isConnecting, isConnected } = useAccount();
+  const {
+    address,
+    isConnecting,
+    isConnected,
+    connector: accConnector,
+  } = useAccount();
   const [rnMessage, setRnMessage] = useState<string | null>(null);
   const [appUrl, setAppUrl] = useState<string | null>(null);
+
   const searchParams = useSearchParams();
   const { disconnect } = useDisconnect({
     mutation: {
@@ -45,18 +54,23 @@ const TypedSigner = () => {
   const { signTypedData } = useSignTypedData({
     mutation: {
       onSuccess: async (signature, { account, message }) => {
-        console.log(signature);
-        console.log(account);
-        console.log(message);
-        const isValid = await client.verifyMessage({
+        console.log("account", account);
+        console.log("message", message);
+        console.log("signature", signature);
+        if (!account || !message)
+          throw new Error("Missing verification params");
+        const valid = await client.verifyTypedData({
           address: account as Address,
-          message: Object.keys(message)[0],
+          domain,
+          types,
+          primaryType: "Mail",
+          message: message as Message,
           signature,
         });
-        console.log(isValid);
+        console.log("valid:", valid);
         setUser((prevState: UserState) => ({
           ...prevState,
-          signature: { hex: signature, valid: isValid },
+          signature: { hex: signature, valid: valid },
         }));
       },
     },
@@ -73,11 +87,51 @@ const TypedSigner = () => {
     connector,
   };
 
-  const parsedSignature = useMemo(() => {
-    if (!user.signature?.hex) return;
-
-    return parseErc6492Signature(user.signature.hex).signature;
-  }, [user.signature?.hex]);
+  // const sign = async () => {
+  //   if (!address) throw new Error("Mising sign params");
+  //   const signature: `0x${string}` = await walletClient.signTypedData({
+  //     account: address,
+  //     domain,
+  //     types,
+  //     primaryType: "Mail",
+  //     message: {
+  //       from: {
+  //         name: "Matt",
+  //         wallet: "0x0000000000000000000000000000000000000000",
+  //       },
+  //       to: {
+  //         name: "Bianca",
+  //         wallet: "0x0000000000000000000000000000000000000001",
+  //       },
+  //       contents: searchParams.get("message") || "Default Message",
+  //     },
+  //   });
+  //   const {
+  //     address: addr,
+  //     data,
+  //     signature: sig,
+  //   } = parseErc6492Signature(signature);
+  //   console.log("parseErc6492Signature(signature)", signature);
+  //   console.log("address", addr);
+  //   console.log("data", data);
+  //   const isValid = await client.verifyMessage({
+  //     address: address || "0x",
+  //     message: data,
+  //     signature: sig || "",
+  //   });
+  //   console.log("valid:", isValid);
+  //   setUser((prevState: UserState) => ({
+  //     ...prevState,
+  //     signature: { hex: signature, valid: isValid },
+  //   }));
+  // };
+  // const parsedSignature = useMemo(() => {
+  //   if (!user.signature?.hex) return;
+  //   const parsed = parseErc6492Signature(user.signature.hex).signature;
+  //   console.log("user.signature.hex", user.signature.hex);
+  //   console.log("parseErc6492Signature", parsed);
+  //   return parsed;
+  // }, [user.signature?.hex]);
 
   const handleDisconnect = () => {
     try {
@@ -125,23 +179,26 @@ const TypedSigner = () => {
       handleConnect();
       return;
     }
+    const contents = searchParams.get("message");
 
+    if (!contents) throw new Error("No content for typed data");
     try {
       signTypedData({
         account: address,
+        connector: accConnector,
         domain,
         types,
         message: {
           from: {
-            name: "Matt",
-            wallet: "0x0000000000000000000000000000000000000000",
+            name: "Bob",
+            wallet: "0x0000000000000000000000000000000000000000" as Address,
           },
           to: {
-            name: "Bianca",
-            wallet: "0x0000000000000000000000000000000000000001",
+            name: "Alice",
+            wallet: "0x0000000000000000000000000000000000000001" as Address,
           },
-          contents: searchParams.get("message") || "Default Message",
-        },
+          contents,
+        } as Message,
         primaryType: "Mail",
       });
     } catch (error) {
@@ -167,7 +224,7 @@ const TypedSigner = () => {
       <div className="flex flex-col sm:flex-row items-center p-4 pt-8">
         <CardHeader>
           <CardTitle className="text-center">
-            {address && isConnected === true
+            {typeof user.address !== null
               ? "Sign Typed Data"
               : "Connect Wallet"}
           </CardTitle>
@@ -194,7 +251,7 @@ const TypedSigner = () => {
             </div>
           ) : (
             <Button type="button" onClick={promptToSign}>
-              {isConnected === true ? "Sign" : "Connect"}
+              {typeof user.address !== null ? "Sign" : "Connect"}
             </Button>
           )}
         </CardContent>
