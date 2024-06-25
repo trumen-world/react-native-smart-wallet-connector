@@ -120,7 +120,11 @@ export default function Header() {
               Sign <Fingerprint className="h-3 w-3" />
             </Badge>
           </Link>
-          <Link href="/batch" className="text-lg font-semibold md:text-base">
+          <Link
+            prefetch
+            href="/batch"
+            className="text-lg font-semibold md:text-base"
+          >
             <Badge
               variant={"secondary"}
               className="gap-1 rounded-lg border-2 border-transparent hover:border-2 hover:border-primary hover:shadow-md"

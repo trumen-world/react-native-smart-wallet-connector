@@ -12,10 +12,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import useBatch, { BatchState, Transaction } from "@/lib/hooks/use-batch";
-import { useCallsStatus, useWriteContracts } from "wagmi/experimental";
+import { useWriteContracts } from "wagmi/experimental";
 import { Fingerprint } from "lucide-react";
 import useUser from "@/lib/hooks/use-user";
-import { useAccount } from "wagmi";
 import { useEffect } from "react";
 import { client } from "@/lib/chain/viem";
 import { BaseError, ContractFunctionRevertedError } from "viem";
@@ -36,15 +35,6 @@ const BatchForm = () => {
   const [batch, setBatch] = useBatch();
   // const { address } = useAccount();
   const { data: id, writeContracts } = useWriteContracts();
-  // const { data: callsStatus } = useCallsStatus({
-  //   id: id as string,
-  //   query: {
-  //     enabled: !!id,
-  //     // Poll every second until the calls are confirmed
-  //     refetchInterval: (data) =>
-  //       data.state.data?.status === "CONFIRMED" ? false : 1000,
-  //   },
-  // });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),

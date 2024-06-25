@@ -30,6 +30,8 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { PackagePlus, Plus, PlusCircle, Trash } from "lucide-react";
 import { Input } from "./ui/input";
 import { parseAbi, parseAbiItem } from "viem";
+import { toast } from "./ui/use-toast";
+import { ToastAction } from "./ui/toast";
 
 const FormSchema = z.object({
   address: z.string(),
@@ -45,15 +47,17 @@ const Batcher = () => {
   const { connect, error } = useConnect();
   const { data: id, writeContracts } = useWriteContracts();
   const account = useAccount();
-  // const { data: callsStatus } = useCallsStatus({
-  //   id: id as string,
-  //   query: {
-  //     enabled: !!id,
-  //     // Poll every second until the calls are confirmed
-  //     refetchInterval: (data) =>
-  //       data.state.data?.status === "CONFIRMED" ? false : 1000,
-  //   },
-  // });
+  const { data: callsStatus } = useCallsStatus({
+    id: id as string,
+    query: {
+      initialData: {
+        enabled: !!id,
+        // Poll every second until the calls are confirmed
+        refetchInterval: (data: any) =>
+          data.state.data?.status === "CONFIRMED" ? false : 1000,
+      },
+    },
+  });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -69,7 +73,7 @@ const Batcher = () => {
       form.reset({
         address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
         abi: ["function safeMint(address to)"],
-        args: [user.address],
+        args: [],
       });
       setDefaultValuesSet(true);
     }
@@ -83,6 +87,10 @@ const Batcher = () => {
   const deleteArgument = (index: number) => {
     remove(index);
   };
+
+  useEffect(() => {
+    append(user.address);
+  }, [append, user.address]);
 
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
     console.log("Form Data Submitted:", data);
