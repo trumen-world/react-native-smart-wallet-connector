@@ -20,7 +20,7 @@ export function ThemeToggle() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="secondary"
-          className="bg-background border-2"
+          className="h-8 w-8 border-2 border-accent bg-background"
           size="icon"
         >
           <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -29,7 +29,7 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="md:flex-col md:flex hidden">
+      <DropdownMenuContent align="end" className="hidden md:flex md:flex-col">
         <DropdownMenuItem onClick={() => setTheme("light")}>
           Light
         </DropdownMenuItem>

@@ -30,12 +30,11 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { PackagePlus, Plus, PlusCircle } from "lucide-react";
 import { Input } from "./ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { parseAbiItem } from "viem";
+import { Abi, AbiItem, AbiItemName, parseAbi, parseAbiItem } from "viem";
 
 const FormSchema = z.object({
   address: z.string(),
   abi: z.any(),
-  functionName: z.string(),
   args: z.string().array(),
 });
 
@@ -43,30 +42,42 @@ const Batcher = () => {
   const [user, setUser] = useUser();
   const [batch, setBatch] = useBatch();
   const [appUrl, setAppUrl] = useState<string | null>(null);
+  const [defaultValues, setDefaultValues] = useState({});
+  const [defaultValuesSet, setDefaultValuesSet] = useState(false);
 
   const { connect, error } = useConnect();
+  const { address } = useAccount();
   const { data: id, writeContracts } = useWriteContracts();
   const account = useAccount();
-  const { data: callsStatus } = useCallsStatus({
-    id: id as string,
-    query: {
-      enabled: !!id,
-      // Poll every second until the calls are confirmed
-      refetchInterval: (data) =>
-        data.state.data?.status === "CONFIRMED" ? false : 1000,
-    },
-  });
+  // const { data: callsStatus } = useCallsStatus({
+  //   id: id as string,
+  //   query: {
+  //     enabled: !!id,
+  //     // Poll every second until the calls are confirmed
+  //     refetchInterval: (data) =>
+  //       data.state.data?.status === "CONFIRMED" ? false : 1000,
+  //   },
+  // });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
-      abi: [""],
-      // TODO: Form can just have address, args and abi, no functionName input required -- that can be parsed from the abi
-      functionName: "safeMint",
-      args: [""],
+      abi: ["function safeMint(address to)"],
+      args: [],
     },
   });
+
+  useEffect(() => {
+    if (user.address && !defaultValuesSet) {
+      form.reset({
+        address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
+        abi: ["function safeMint(address to)"],
+        args: [user.address],
+      });
+      setDefaultValuesSet(true);
+    }
+  }, [user.address, defaultValuesSet, form]);
 
   const { fields, append } = useFieldArray({
     control: form.control,
@@ -75,10 +86,11 @@ const Batcher = () => {
 
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
     console.log("Form Data Submitted:", data);
+    const parsedAbi = parseAbi(data.abi);
     const transaction = {
       address: data.address as `0x${string}`,
-      abi: data.abi,
-      functionName: data.functionName,
+      abi: parsedAbi,
+      functionName: Object.values(parsedAbi[0])[0] as string,
       args: data.args,
     };
     setBatch((p: BatchState) => ({
@@ -86,15 +98,6 @@ const Batcher = () => {
       transactions: [...(p.transactions || []), transaction],
     }));
   };
-
-  // const handleConnect = () => {
-  //   try {
-  //     connect({ ...args });
-  //     setUser((prev: UserState) => ({ ...prev, account }));
-  //   } catch (err) {
-  //     console.error("Connection failed", err);
-  //   }
-  // };
 
   useEffect(() => {
     console.log("Batch Details:", { ...batch });
@@ -113,11 +116,11 @@ const Batcher = () => {
             {`Smart Wallets have many benefits, such as batching transactions.`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="items-center w-full flex flex-col">
+        <CardContent className="flex w-full flex-col items-center">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="w-full space-y-6 flex flex-col items-center"
+              className="flex w-full flex-col items-center space-y-6"
             >
               <FormField
                 control={form.control}
@@ -142,10 +145,19 @@ const Batcher = () => {
                 name="abi"
                 render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel>ABI</FormLabel>
+                    <FormLabel>Function</FormLabel>
 
                     <FormControl>
-                      <Textarea rows={10} placeholder="abi" {...field} />
+                      <Input
+                        placeholder={"penis"}
+                        {...field}
+                        onClick={() => {
+                          console.log(field.value);
+                          console.log(
+                            parseAbiItem("function safeMint(address to)"),
+                          );
+                        }}
+                      />
                     </FormControl>
 
                     <FormDescription>
@@ -155,24 +167,7 @@ const Batcher = () => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="functionName"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormLabel>Function Name</FormLabel>
 
-                    <FormControl>
-                      <Input placeholder="functionName" {...field} />
-                    </FormControl>
-
-                    <FormDescription>
-                      {error && <>{error?.message}</>}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="args"
@@ -181,7 +176,7 @@ const Batcher = () => {
                     <FormLabel>Arguments</FormLabel>
 
                     <FormControl>
-                      <div className="flex flex-col gap-4 items-center">
+                      <div className="flex flex-col items-center gap-4">
                         {fields.map((field, index) => (
                           <Input
                             key={field.id}
@@ -215,13 +210,13 @@ const Batcher = () => {
                 size={"lg"}
                 type="submit"
                 variant={"secondary"}
-                className="flex gap-2 items-center"
+                className="flex items-center gap-2"
               >
                 Add to Batch <PackagePlus className="h-5 w-5" />
               </Button>
             </form>
           </Form>
-          {callsStatus && <div> Status: {callsStatus.status}</div>}
+          {/* {callsStatus && <div> Status: {callsStatus.status}</div>} */}
         </CardContent>
       </div>
       <CardFooter className="flex flex-col gap-4">

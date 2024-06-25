@@ -37,14 +37,14 @@ const ConnectCard = () => {
   };
 
   return (
-    <Card className="m-2 w-5/6">
+    <Card className="m-2 w-5/6 sm:w-2/3 md:w-1/2 lg:max-w-xl">
       <CardHeader>
         <CardTitle className="text-center">Connect Wallet</CardTitle>
         <CardDescription className="text-center">
           Proceed to load or create a wallet.
         </CardDescription>
       </CardHeader>
-      <CardContent className="items-center flex flex-col">
+      <CardContent className="flex flex-col items-center">
         <Button type="button" onClick={handleConnect}>
           Connect
         </Button>
@@ -59,10 +59,10 @@ const ConnectCard = () => {
           </span>
         </p> */}
         {error ? (
-          <p className="p-4 flex flex-col w-96 text-center">
+          <p className="flex w-96 flex-col p-4 text-center">
             Error:
             <span
-              className={"dark:text-red-500 text-red-700"}
+              className={"text-red-700 dark:text-red-500"}
             >{`${error}`}</span>
           </p>
         ) : (

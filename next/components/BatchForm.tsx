@@ -11,10 +11,12 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Transaction } from "@/lib/hooks/use-batch";
-import { useAccount } from "wagmi";
+import useBatch, { Transaction } from "@/lib/hooks/use-batch";
 import { useCallsStatus, useWriteContracts } from "wagmi/experimental";
 import { Fingerprint } from "lucide-react";
+import useUser from "@/lib/hooks/use-user";
+import { useAccount } from "wagmi";
+import { useEffect } from "react";
 
 const FormSchema = z.object({
   transactions: z
@@ -27,47 +29,82 @@ const FormSchema = z.object({
     .array(),
 });
 
-const BatchForm = ({ transactions }: { transactions: Transaction[] }) => {
-  const account = useAccount();
+const BatchForm = () => {
+  const [user] = useUser();
+  const [batch, setBatch] = useBatch();
+  // const { address } = useAccount();
   const { data: id, writeContracts } = useWriteContracts();
-  const { data: callsStatus } = useCallsStatus({
-    id: id as string,
-    query: {
-      enabled: !!id,
-      // Poll every second until the calls are confirmed
-      refetchInterval: (data) =>
-        data.state.data?.status === "CONFIRMED" ? false : 1000,
-    },
-  });
+  // const { data: callsStatus } = useCallsStatus({
+  //   id: id as string,
+  //   query: {
+  //     enabled: !!id,
+  //     // Poll every second until the calls are confirmed
+  //     refetchInterval: (data) =>
+  //       data.state.data?.status === "CONFIRMED" ? false : 1000,
+  //   },
+  // });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      transactions: [
-        ...transactions,
-
-        // {
-        //   address: data.address as `0x${string}`,
-        //   abi: JSON.parse(data.abi),
-        //   functionName: data.functionName,
-        //   args: JSON.parse(data.args),
-        // },
-      ],
+      transactions: [],
     },
   });
 
+  useEffect(() => {
+    if (!user.address) return;
+    setBatch({
+      transactions: [
+        {
+          address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
+          abi: [
+            {
+              name: "safeMint",
+              type: "function",
+              stateMutability: "view",
+              inputs: [
+                {
+                  type: "address",
+                  name: "recipient",
+                },
+              ],
+              outputs: [],
+            },
+          ],
+          functionName: "safeMint",
+          args: [user.address],
+        },
+        {
+          address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
+          abi: [
+            {
+              name: "safeMint",
+              type: "function",
+              stateMutability: "view",
+              inputs: [
+                {
+                  type: "address",
+                  name: "recipient",
+                },
+              ],
+              outputs: [],
+            },
+          ],
+          functionName: "safeMint",
+          args: [user.address],
+        },
+      ],
+    });
+  }, [user.address, setBatch]);
+
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log("ABI", transactions[0].abi);
+    // console.log("ABI", transactions[0].abi);
     console.log("BATCH FORM", data);
-    console.log([...transactions]);
+    // console.log([...transactions]);
+    if (!batch.transactions) return;
+    form.reset({ transactions: batch.transactions });
     writeContracts({
-      contracts: transactions.map((transaction) => {
-        console.log(transaction.abi);
-        return {
-          ...transaction,
-          abi: transaction.abi,
-        };
-      }),
+      contracts: batch.transactions,
     });
   }
 
@@ -75,7 +112,7 @@ const BatchForm = ({ transactions }: { transactions: Transaction[] }) => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 items-center flex flex-col w-full"
+        className="flex w-full flex-col items-center space-y-8"
       >
         <FormField
           control={form.control}
@@ -89,7 +126,7 @@ const BatchForm = ({ transactions }: { transactions: Transaction[] }) => {
           )}
         />
 
-        <Button size={"lg"} type="submit" className="flex gap-2 items-center">
+        <Button size={"lg"} type="submit" className="flex items-center gap-2">
           Confirm Batch <Fingerprint className="h-5 w-5" />
         </Button>
       </form>

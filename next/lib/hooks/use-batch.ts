@@ -3,7 +3,7 @@ import { Abi, AbiItem, AbiItemArgs, Address, Hex } from "viem";
 
 export type Transaction = {
   address: `0x${string}`;
-  abi: [AbiItem];
+  abi: Abi;
   functionName: string;
   args: string[];
 };
@@ -34,7 +34,7 @@ const configAtom = atom<BatchState>({
         },
       ],
       functionName: "safeMint",
-      args: ["0x0209080b11EAf27CcbA002A30499Cc01DE69D76A"],
+      args: ["0x0000000000000000000000000000000000000000"],
     },
     {
       address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
@@ -53,7 +53,7 @@ const configAtom = atom<BatchState>({
         },
       ],
       functionName: "safeMint",
-      args: ["0x0209080b11EAf27CcbA002A30499Cc01DE69D76A"],
+      args: ["0x0000000000000000000000000000000000000000"],
     },
   ],
 });

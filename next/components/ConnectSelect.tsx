@@ -10,40 +10,24 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CircleUser, UserRoundX } from "lucide-react";
+import { CircleUser, Cog, Moon, Sun, UserRoundX } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
-import { useConnect, useDisconnect, useAccount } from "wagmi";
-import { useEffect, useState } from "react";
+import {
+  useConnect,
+  useDisconnect,
+  useAccount,
+  Connector,
+  UseAccountReturnType,
+} from "wagmi";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import useUser, { UserState } from "@/lib/hooks/use-user";
 import { cn, getChainName } from "@/lib/utils";
 import { NULL_USER } from "@/lib/constants";
 import { coinbaseWallet } from "wagmi/connectors";
 import { Address } from "viem";
+import { useTheme } from "next-themes";
 
 const STATUS_COLORS = {
   connected: "bg-lime-600 dark:bg-lime-300",
@@ -52,12 +36,9 @@ const STATUS_COLORS = {
   reconnecting: "bg-orange-600 dark:bg-orange-500",
 };
 
-const FormSchema = z.object({
-  connector: z.string(),
-});
-
 export function ConnectSelect() {
-  const { connectors, connect, error } = useConnect();
+  const { connect } = useConnect();
+  const { setTheme } = useTheme();
   const { disconnect } = useDisconnect();
   const [user, setUser] = useUser();
   const account = useAccount();
@@ -68,11 +49,7 @@ export function ConnectSelect() {
     chainId,
   });
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-  });
-
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [align, setAlign] = useState<"start" | "end">("end");
 
   useEffect(() => {
@@ -85,25 +62,6 @@ export function ConnectSelect() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    const selectedConnector = connectors.find(
-      (connector) => connector.name === data.connector,
-    );
-    if (selectedConnector) {
-      connect({ connector: selectedConnector });
-    }
-    setDialogOpen(false);
-
-    toast({
-      title: "Connecting with:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(user.address)}</code>
-        </pre>
-      ),
-    });
-  };
-
   const handleJumpToRNApp = () => {
     if (!account.address) return;
 
@@ -115,166 +73,148 @@ export function ConnectSelect() {
   const handleDisconnect = () => {
     disconnect();
     setUser(NULL_USER);
-    setDialogOpen(false);
+    setOpen(false);
   };
 
-  const handleConnection = () => {
-    if (!account.address) {
-      connect({ chainId, connector });
-      return;
-    } else if (account.isConnected) {
-      setUser((prevState: UserState) => ({
-        ...prevState,
-        address: account.address as Address,
-      }));
-    } else {
-      setUser(NULL_USER);
-    }
-    setDialogOpen(true);
+  const handleConnect = () => {
+    connect({ chainId, connector });
+    setUser((prevState: UserState) => ({
+      ...prevState,
+      address: account.address as Address,
+    }));
   };
-
-  const transport = account.chainId ? getChainName(account.chainId) : null;
 
   return (
     <div className="flex items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="secondary"
               size="icon"
-              className="bg-background border-2 rounded-full"
+              className="h-9 w-9 rounded-full border-2 border-accent bg-background"
             >
-              {account.isConnected ? (
-                <CircleUser className="h-5 w-5" />
-              ) : (
-                <UserRoundX className="h-5 w-5" />
-              )}
+              <CircleUser
+                className={cn(
+                  "h-5 w-5",
+                  account.isConnected ? "opacity-100" : "opacity-50",
+                )}
+              />
               <span className="sr-only">Toggle user menu</span>
             </Button>
+            {/* <AvatarTrigger open={open} setOpen={setOpen} account={account} /> */}
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align={align} className="-translate-x-4">
             <DropdownMenuLabel>
-              <div className="flex flex-col gap-2">
-                <p>My Account</p>
-
-                <div className="flex items-center gap-1">
-                  <div
-                    className={cn(
-                      STATUS_COLORS[account.status] || "",
-                      "h-2 w-2 rounded-full",
-                    )}
-                  />
-                  <span className="font-light text-xs flex items-center gap-1 capitalize">
-                    : {account.status}
-                  </span>
-                </div>
-
-                {account.address && (
-                  <p className="font-light text-xs overflow-clip">
-                    {account.address}
-                  </p>
-                )}
-
-                {account.chainId && (
-                  <p className="font-light text-xs">
-                    Chain ID: {account.chainId} - {transport}
-                  </p>
-                )}
-              </div>
+              <AccountInfo account={account} />
             </DropdownMenuLabel>
+            <div className="flex items-center gap-2">
+              <DropdownMenuItem
+                onClick={() => setTheme("light")}
+                className="flex w-full justify-center"
+              >
+                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90" />
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setTheme("dark")}
+                className="flex w-full justify-center"
+              >
+                <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90" />
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setTheme("system")}
+                className="flex w-full justify-center"
+              >
+                <Cog className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90" />
+              </DropdownMenuItem>
+            </div>
             {account.address && (
               <DropdownMenuItem onClick={handleJumpToRNApp}>
                 Back to App
               </DropdownMenuItem>
             )}
-
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleConnection}
-              className={cn(
-                "mt-1",
-                account.isConnected ? "bg-red-700 text-white" : "",
-              )}
-            >
-              {!account.isConnected ? (
-                <span>Connect</span>
-              ) : (
-                <span>Disconnect</span>
-              )}
-            </DropdownMenuItem>
+            {!account.isConnected ? (
+              <DropdownMenuItem
+                onClick={handleConnect}
+                className={cn(
+                  "mt-1",
+                  account.isConnected ? "bg-red-700 text-white" : "",
+                )}
+              >
+                Connect
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                onClick={handleDisconnect}
+                className={cn(
+                  "mt-1",
+                  account.isConnected ? "bg-red-700 text-white" : "",
+                )}
+              >
+                Disconnect
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <DialogContent>
-          {account.status === "disconnected" && (
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="w-full space-y-6"
-              >
-                <DialogHeader>
-                  <FormField
-                    control={form.control}
-                    name="connector"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          <DialogTitle>Select your wallet.</DialogTitle>
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a wallet provider" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {connectors.map((connector) => (
-                              <SelectItem
-                                key={connector.id}
-                                value={connector.name}
-                              >
-                                {connector.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          {error && <>{error.message}</>}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <DialogDescription>{`Don't have a wallet? Get one here.`}</DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button type="submit">Connect</Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          )}
-          {account.status === "connected" && (
-            <div>
-              <DialogHeader>
-                <DialogTitle>Are you sure you want to disconnect?</DialogTitle>
-                <DialogDescription>
-                  You can reconnect your wallet again at a later point in time.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button type="submit" onClick={handleDisconnect}>
-                  Disconnect
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+const AvatarTrigger = ({
+  account,
+  open,
+  setOpen,
+}: {
+  account: UseAccountReturnType;
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+}) => {
+  return (
+    <Button
+      variant="secondary"
+      size="icon"
+      className="h-9 w-9 rounded-full border-2 bg-background"
+      onClick={() => setOpen(open)}
+    >
+      {account.isConnected ? (
+        <CircleUser className="h-5 w-5" />
+      ) : (
+        <UserRoundX className="h-5 w-5" />
+      )}
+      <span className="sr-only">Toggle user menu</span>
+    </Button>
+  );
+};
+
+const AccountInfo = ({ account }: { account: UseAccountReturnType }) => {
+  const transport = account.chainId ? getChainName(account.chainId) : null;
+  return (
+    <div className="flex flex-col gap-2">
+      <p>My Account</p>
+
+      <div className="flex items-center gap-1">
+        <div
+          className={cn(
+            STATUS_COLORS[account.status] || "",
+            "h-2 w-2 rounded-full",
+          )}
+        />
+        <span className="flex items-center gap-1 text-xs font-light capitalize">
+          : {account.status}
+        </span>
+      </div>
+
+      {account.address && (
+        <p className="overflow-clip text-xs font-light">{account.address}</p>
+      )}
+
+      {account.chainId && (
+        <p className="text-xs font-light">
+          Chain ID: {account.chainId} - {transport}
+        </p>
+      )}
+    </div>
+  );
+};

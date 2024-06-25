@@ -1,12 +1,12 @@
 import Page from "@/components/Page";
 import PermitSigner from "@/components/PermitSigner";
-import SignerSkeleton from "@/components/SignerSkeleton";
+import Skeleton from "@/components/Skeleton";
 import { Suspense } from "react";
 
 export default async function Batch() {
   return (
     <Page>
-      <Suspense fallback={<SignerSkeleton />}>
+      <Suspense fallback={<Skeleton />}>
         <PermitSigner />
       </Suspense>
     </Page>

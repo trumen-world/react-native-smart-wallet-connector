@@ -11,16 +11,15 @@ import {
 } from "@/components/ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { useAccount, useConnect, useDisconnect, useSignTypedData } from "wagmi";
-import { Check, X } from "lucide-react";
+import { useAccount, useConnect, useSignTypedData } from "wagmi";
 import { cn } from "@/lib/utils";
 import useUser, { UserState } from "@/lib/hooks/use-user";
-import { coinbaseWallet } from "wagmi/connectors";
 import { useSearchParams } from "next/navigation";
 import { client } from "@/lib/chain/viem";
-import { NULL_USER, domain, types } from "@/lib/constants";
-import { Address } from "viem";
-import SignatureBadge from "./SignatureBadge";
+import { args, domain, types } from "@/lib/constants";
+import { Account, Address, Hex, SignableMessage } from "viem";
+import ReturnButton from "./ReturnButton";
+import { Check, X } from "lucide-react";
 
 type Message = {
   from: {
@@ -43,12 +42,20 @@ const TypedSigner = () => {
     connector: accConnector,
   } = useAccount();
   const [rnMessage, setRnMessage] = useState<string | null>(null);
-  const [appUrl, setAppUrl] = useState<string | null>(null);
-
   const searchParams = useSearchParams();
+  const { connect } = useConnect();
   const { signTypedData } = useSignTypedData({
     mutation: {
-      onSuccess: async (signature, { account, message }) => {
+      onSuccess: async (
+        signature: Hex,
+        {
+          account,
+          message,
+        }: {
+          account?: `0x${string}` | Account | undefined;
+          message: Record<string, unknown>;
+        },
+      ) => {
         console.log("account", account);
         console.log("message", message);
         console.log("signature", signature);
@@ -65,22 +72,11 @@ const TypedSigner = () => {
         console.log("valid:", valid);
         setUser((prevState: UserState) => ({
           ...prevState,
-          signature: { hex: signature, valid: valid },
+          typedDataSignature: { hex: signature, valid: valid },
         }));
       },
     },
   });
-  const { connect } = useConnect();
-  const chainId: 84532 = 84532;
-  const connector = coinbaseWallet({
-    appName: "Coinbase Smart Wallet w/ React Native",
-    preference: "smartWalletOnly",
-    chainId: 84532,
-  });
-  const args = {
-    chainId,
-    connector,
-  };
 
   const handleConnect = () => {
     try {
@@ -90,29 +86,6 @@ const TypedSigner = () => {
       console.error("Connection failed", err);
     }
   };
-  const returnToApp = () => {
-    if (!appUrl) {
-      throw new Error("Cannot return to app without appUrl");
-    }
-    if (address && user.signature?.hex) {
-      window.location.href = appUrl;
-    }
-  };
-
-  useEffect(() => {
-    const addressParam = address
-      ? `?address=${encodeURIComponent(address)}`
-      : "";
-    const validParam = user.signature?.valid
-      ? `&valid=${user.signature?.valid}`
-      : "";
-    const signatureParam = user.signature?.hex
-      ? `&signature=${encodeURIComponent(user.signature.hex)}`
-      : "";
-    const url = `RNCBSmartWallet://${addressParam}${signatureParam}${validParam}`;
-    console.log("url", url);
-    setAppUrl(url);
-  }, [address, user.signature?.valid, user.signature?.hex]);
 
   const promptToSign = async () => {
     if (!address) {
@@ -157,11 +130,12 @@ const TypedSigner = () => {
   return (
     <Card
       className={cn(
-        "m-2",
-        user.signature?.valid && "border-lime-500 bg-lime-50 dark:bg-lime-950",
+        "m-2 w-5/6 sm:w-2/3 md:w-1/2 lg:max-w-xl",
+        user.typedDataSignature?.valid &&
+          "border-lime-500 bg-lime-50 dark:bg-lime-950",
       )}
     >
-      <div className="flex flex-col sm:flex-row items-center p-4 pt-8">
+      <div className="flex flex-col items-center p-4 pt-8">
         <CardHeader>
           <CardTitle className="text-center">
             {typeof user.address !== null
@@ -172,12 +146,10 @@ const TypedSigner = () => {
             {`Prove it's you with a signature.`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="items-center flex flex-col">
-          {user.signature?.hex ? (
+        <CardContent className="flex flex-col items-center">
+          {user.typedDataSignature?.hex ? (
             <div className="flex flex-col gap-3">
-              <Button variant={"link"} type="button" onClick={returnToApp}>
-                Return to iOS
-              </Button>
+              <ReturnButton />
               <Button
                 variant={"secondary"}
                 type="button"
@@ -194,7 +166,12 @@ const TypedSigner = () => {
         </CardContent>
       </div>
       <CardFooter className="flex flex-col gap-4">
-        <SignatureBadge signature={user.signature} />
+        {!rnMessage && (
+          <p className="text-xs">
+            {"Requires a `?message=` parameter with a value"}
+          </p>
+        )}
+        <SignatureBadge signature={user.typedDataSignature} />
         {rnMessage && (
           <MessageBadge
             title="React Native Message:"
@@ -215,8 +192,48 @@ const MessageBadge = ({
 }) => (
   <div className="flex flex-col items-center">
     <Badge variant={"secondary"}>{title}</Badge>
-    <p className="text-xs max-w-sm break-all">{message || ""}</p>
+    <p className="max-w-sm break-all text-xs">{message || ""}</p>
   </div>
 );
 
+const SignatureBadge = ({
+  signature,
+}: {
+  signature: UserState["typedDataSignature"];
+}) => (
+  <div className="flex flex-col items-center">
+    <div className="flex gap-2">
+      {signature?.hex && (
+        <Badge
+          className={
+            signature?.valid ? "bg-lime-700 dark:bg-lime-400" : "bg-red-500"
+          }
+        >
+          <div
+            className={cn(
+              "ml-1 flex gap-[2px]",
+              signature.valid
+                ? "text-lime-50 dark:text-lime-950"
+                : "text-red-800 dark:text-red-500",
+            )}
+          >
+            <p className="text-xs">{signature.valid ? "Valid" : "Invalid"}</p>
+            {signature.valid ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <X className="h-4 w-4" />
+            )}
+          </div>
+        </Badge>
+      )}
+    </div>
+    {signature?.hex && (
+      <p className="mt-2 max-w-sm break-all text-[10px] leading-[12px]">
+        Length: {signature?.hex ? signature.hex.length : ""}
+        <br />
+        {signature?.hex || ""}
+      </p>
+    )}
+  </div>
+);
 export default TypedSigner;

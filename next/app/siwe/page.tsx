@@ -1,12 +1,12 @@
 import Page from "@/components/Page";
-import SignerSkeleton from "@/components/SignerSkeleton";
+import Skeleton from "@/components/Skeleton";
 import SiweSigner from "@/components/SiweSigner";
 import { Suspense } from "react";
 
 export default async function Siwe() {
   return (
     <Page>
-      <Suspense fallback={<SignerSkeleton />}>
+      <Suspense fallback={<Skeleton />}>
         <SiweSigner />
       </Suspense>
     </Page>

@@ -3,12 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Link from "next/link";
-import { ThemeToggle } from "./ThemeToggle";
 import { ThemeToggleMobile } from "./ThemeToggleMobile";
 import {
   Diamond,
   Fingerprint,
-  Key,
   LockKeyholeOpen,
   Menu,
   PackagePlus,
@@ -18,13 +16,14 @@ import {
 import { ConnectSelect } from "./ConnectSelect";
 import { useAccount } from "wagmi";
 import useUser, { UserState } from "@/lib/hooks/use-user";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "./ui/badge";
-import { Address } from "viem";
+import useApp from "@/lib/hooks/use-app";
 
 export default function Header() {
   const [user, setUser] = useUser();
-  const account = useAccount();
+  const [, setApp] = useApp();
+  const { address, isConnecting, isConnected } = useAccount();
   const [sheetOpen, setSheetOpen] = useState<boolean>(false);
 
   const sheetOnOpenChange = () => {
@@ -32,35 +31,75 @@ export default function Header() {
   };
 
   useEffect(() => {
-    if (account.address) {
-      setUser((prevUser: UserState) => ({
-        ...prevUser,
-        address: account.address as Address,
-      }));
-    }
-  }, [account.address, setUser, user.address]);
+    console.log("Account details:", { address, isConnecting, isConnected });
+  }, [address, isConnecting, isConnected]);
+
+  useEffect(() => {
+    if (!address) return;
+    setUser((prevUser: UserState) => ({
+      ...prevUser,
+      address,
+    }));
+  }, [address, setUser]);
+
+  useEffect(() => {
+    const addressParam = address
+      ? `?address=${encodeURIComponent(address)}`
+      : "";
+    const siweSignatureParam = user.siweSignature?.hex
+      ? `&siweSignature=${encodeURIComponent(user.siweSignature.hex)}`
+      : "";
+    const siweValid = user.siweSignature?.valid
+      ? `&valid=${user.siweSignature?.valid}`
+      : "";
+    const typedDataSignatureParam = user.typedDataSignature?.hex
+      ? `&typedDataSignature=${encodeURIComponent(user.typedDataSignature.hex)}`
+      : "";
+    const typedDataValid = user.typedDataSignature?.valid
+      ? `&valid=${user.typedDataSignature?.valid}`
+      : "";
+    const permitSignatureParam = user.permitSignature?.hex
+      ? `&permitSignature=${encodeURIComponent(user.permitSignature.hex)}`
+      : "";
+    const permitValid = user.permitSignature?.valid
+      ? `&valid=${user.permitSignature?.valid}`
+      : "";
+
+    const url = `RNCBSmartWallet://${addressParam}${siweSignatureParam}${siweValid}${typedDataSignatureParam}${typedDataValid}${permitSignatureParam}${permitValid}`;
+    console.log("url", url);
+    setApp({ url });
+  }, [
+    address,
+    user.siweSignature?.valid,
+    user.siweSignature?.hex,
+    user.typedDataSignature?.valid,
+    user.typedDataSignature?.hex,
+    user.permitSignature?.valid,
+    user.permitSignature?.hex,
+    setApp,
+  ]);
 
   return (
-    <header className="sticky top-0 z-50 flex w-full h-16 justify-between items-center gap-2 border-b bg-background/10 backdrop-blur-[1px] px-4 md:px-6">
-      <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:justify-between w-full md:gap-5 md:text-sm lg:gap-6">
+    <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between gap-2 border-b bg-background/10 px-4 backdrop-blur-[1px] md:px-6">
+      <nav className="hidden w-full flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:justify-between md:gap-5 md:text-sm lg:gap-6">
         <Link
           href="/"
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
           {/* TODO: ADD trumen world logo */}
-          <Wallet className="w-8 h-8 text-indigo-700" />
-          <h1 className="text-xl text-blue-600 tracking-tighter leading-3">
-            CBSWRN
+          <Wallet className="h-8 w-8 text-indigo-700" />
+          <h1 className="text-xl leading-3 tracking-tighter text-blue-600">
+            React Native Smart Wallet
           </h1>
           <span className="sr-only">
             Coinbase Smart Wallet with React Native
           </span>
         </Link>
-        <div className="flex gap-1 items-center mr-4">
+        <div className="mr-4 flex items-center gap-1">
           <Link href="/connect" className="text-lg font-semibold md:text-base">
             <Badge
               variant={"secondary"}
-              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md border-2 border-transparent"
+              className="gap-1 rounded-lg border-2 border-transparent hover:border-2 hover:border-primary hover:shadow-md"
             >
               Connect <ScanFace className="h-3 w-3" />
             </Badge>
@@ -68,7 +107,7 @@ export default function Header() {
           <Link href="/siwe" className="text-lg font-semibold md:text-base">
             <Badge
               variant={"secondary"}
-              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md  border-2 border-transparent"
+              className="gap-1 rounded-lg border-2 border-transparent hover:border-2 hover:border-primary hover:shadow-md"
             >
               SIWE <Diamond className="h-3 w-3" />
             </Badge>
@@ -76,7 +115,7 @@ export default function Header() {
           <Link href="/sign" className="text-lg font-semibold md:text-base">
             <Badge
               variant={"secondary"}
-              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md  border-2 border-transparent"
+              className="gap-1 rounded-lg border-2 border-transparent hover:border-2 hover:border-primary hover:shadow-md"
             >
               Sign <Fingerprint className="h-3 w-3" />
             </Badge>
@@ -84,15 +123,18 @@ export default function Header() {
           <Link href="/batch" className="text-lg font-semibold md:text-base">
             <Badge
               variant={"secondary"}
-              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md  border-2 border-transparent"
+              className="gap-1 rounded-lg border-2 border-transparent hover:border-2 hover:border-primary hover:shadow-md"
             >
               Batch <PackagePlus className="h-3 w-3" />
             </Badge>
           </Link>
-          <Link href="/permit" className="text-lg font-semibold md:text-base">
+          <Link
+            href="#"
+            className="cursor-not-allowed text-lg font-semibold md:text-base"
+          >
             <Badge
               variant={"secondary"}
-              className="rounded-lg hover:border-2 gap-1 hover:border-primary hover:shadow-md  border-2 border-transparent"
+              className="gap-1 rounded-lg border-2 border-transparent opacity-25 hover:border-2 hover:border-primary hover:shadow-md"
             >
               Permit <LockKeyholeOpen className="h-3 w-3" />
             </Badge>
@@ -102,11 +144,11 @@ export default function Header() {
       {/* MOBILE */}
       <Link
         href="/"
-        className="flex md:hidden items-center gap-2 text-lg font-semibold md:text-base"
+        className="flex items-center gap-2 text-lg font-semibold md:hidden md:text-base"
       >
-        <Wallet className="w-6 h-6 text-indigo-700" />
-        <p className="text-primary tracking-tighter leading-3 text-xs max-w-[150px]">
-          CBSWRN
+        <Wallet className="h-6 w-6 text-indigo-700" />
+        <p className="max-w-[150px] text-xs leading-3 tracking-tighter text-primary">
+          React Native Smart Wallet
         </p>
       </Link>
       <div className="flex gap-1">
@@ -114,110 +156,94 @@ export default function Header() {
           <SheetTrigger asChild>
             <Button
               size="icon"
-              className="shrink-0 md:hidden border bg-background text-foreground dark:hover:bg-stone-900 hover:bg-stone-100"
+              variant={"outline"}
+              className="h-9 w-9 shrink-0 border-2 border-accent bg-background hover:bg-secondary md:hidden"
               onClick={sheetOnOpenChange}
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle navigation menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left">
+          <SheetContent side="right">
             <nav className="grid gap-6 text-lg font-medium">
-              <div className="flex flex-col gap-2 items-start w-full">
+              <div className="flex w-full flex-col items-start gap-2">
                 <Link
                   href="/"
                   className="flex w-full items-center gap-2 text-lg font-semibold text-primary"
                   onClick={sheetOnOpenChange}
                 >
-                  <Wallet className="w-6 h-6 text-indigo-700" />
-                  <h1>CBSWRN</h1>
+                  <Wallet className="h-6 w-6 text-indigo-700" />
+                  <h1>React Native Smart Wallet</h1>
                   <span className="sr-only">
                     Coinbase Smart Wallet with React Native
                   </span>
                 </Link>
                 <Link
                   href="/connect"
-                  className="text-lg w-full flex font-semibold md:text-base"
+                  className="flex w-full text-lg font-semibold md:text-base"
                   onClick={sheetOnOpenChange}
                 >
                   <Badge
                     variant={"outline"}
-                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2  hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    className="flex w-1/2 gap-1 rounded-lg border-2 border-transparent text-center text-base hover:border-2 hover:border-primary hover:shadow-md"
                   >
                     Connect <ScanFace className="h-4 w-4" />
                   </Badge>
                 </Link>
                 <Link
                   href="/siwe"
-                  className="text-lg w-full flex font-semibold md:text-base"
+                  className="flex w-full text-lg font-semibold md:text-base"
                   onClick={sheetOnOpenChange}
                 >
                   <Badge
                     variant={"outline"}
-                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    className="flex w-1/2 gap-1 rounded-lg border-2 border-transparent text-center text-base hover:border-2 hover:border-primary hover:shadow-md"
                   >
                     SIWE <Diamond className="h-4 w-4" />
                   </Badge>
                 </Link>
                 <Link
                   href="/sign"
-                  className="text-lg w-full flex font-semibold md:text-base"
+                  className="flex w-full text-lg font-semibold md:text-base"
                   onClick={sheetOnOpenChange}
                 >
                   <Badge
                     variant={"outline"}
-                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    className="flex w-1/2 gap-1 rounded-lg border-2 border-transparent text-center text-base hover:border-2 hover:border-primary hover:shadow-md"
                   >
                     Sign <Fingerprint className="h-4 w-4" />
                   </Badge>
                 </Link>
                 <Link
                   href="/batch"
-                  className="text-lg w-full flex font-semibold md:text-base"
+                  className="flex w-full text-lg font-semibold md:text-base"
                   onClick={sheetOnOpenChange}
                 >
                   <Badge
                     variant={"outline"}
-                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    className="flex w-1/2 gap-1 rounded-lg border-2 border-transparent text-center text-base hover:border-2 hover:border-primary hover:shadow-md"
                   >
                     Batch <PackagePlus className="h-4 w-4" />
                   </Badge>
                 </Link>
                 <Link
                   href="/permit"
-                  className="text-lg w-full flex font-semibold md:text-base"
+                  className="flex w-full text-lg font-semibold md:text-base"
                   onClick={sheetOnOpenChange}
                 >
                   <Badge
                     variant={"outline"}
-                    className="rounded-lg text-base w-1/2 text-center flex gap-1 hover:border-2 hover:border-primary hover:shadow-md  border-2 border-transparent"
+                    className="flex w-1/2 gap-1 rounded-lg border-2 border-transparent text-center text-base hover:border-2 hover:border-primary hover:shadow-md"
                   >
                     Permit <LockKeyholeOpen className="h-4 w-4" />
                   </Badge>
                 </Link>
               </div>
-              {/* <Link
-                href="/create"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={sheetOnOpenChange}
-              >
-                Create Wallet
-              </Link> */}
-              {/* <Link
-                href="/sign"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={sheetOnOpenChange}
-              >
-                SIWE
-              </Link> */}
-              <ThemeToggleMobile />
+              {/* <ThemeToggleMobile /> */}
             </nav>
           </SheetContent>
         </Sheet>
         <ConnectSelect />
-      </div>
-      <div className="md:flex hidden">
-        <ThemeToggle />
       </div>
     </header>
   );

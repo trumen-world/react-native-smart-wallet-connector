@@ -1,6 +1,6 @@
 import { HttpTransport } from "viem";
 import { http, createConfig } from "wagmi";
-import { base, baseSepolia } from "wagmi/chains";
+import { baseSepolia } from "wagmi/chains";
 import { coinbaseWallet } from "wagmi/connectors";
 
 export type TransportConfig = Record<typeof baseSepolia.id, HttpTransport>;

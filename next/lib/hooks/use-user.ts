@@ -5,7 +5,15 @@ export type UserState = {
   address: Address | null;
   balance?: bigint | null;
   name?: string | null;
-  signature?: {
+  siweSignature?: {
+    hex: Hex | null;
+    valid: boolean | null;
+  };
+  typedDataSignature?: {
+    hex: Hex | null;
+    valid: boolean | null;
+  };
+  permitSignature?: {
     hex: Hex | null;
     valid: boolean | null;
   };

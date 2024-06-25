@@ -5,7 +5,7 @@ import TxTable from "@/components/TxTable";
 export default async function Batch() {
   return (
     <Page>
-      <div className="flex flex-col min-h-screen w-full gap-8 px-8 items-center pb-32">
+      <div className="flex min-h-screen w-full flex-col items-center gap-8 px-8 pb-32">
         <Batcher />
         <TxTable />
       </div>
