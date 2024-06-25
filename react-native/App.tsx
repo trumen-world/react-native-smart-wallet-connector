@@ -178,19 +178,17 @@ const App = () => {
         <Text style={styles.buttonText}>Sign Permission</Text>
       </TouchableOpacity> */}
         <View style={styles.separator} />
-        <Text style={styles.signature}>
-          SIWE Signature: {state?.siweSignature?.hex}
-        </Text>
         <Text style={styles.label}>
-          SIWE Signature Valid: {state?.siweSignature?.valid ? 'TRUE' : 'FALSE'}
+          SIWE Signature: {state?.siweSignature?.valid ? 'VALID' : 'INVALID'}
         </Text>
+        <Text style={styles.signature}>{state?.siweSignature?.hex}</Text>
         <View style={styles.separator} />
         <Text style={styles.signature}>
           Typed Data Signature: {state?.typedDataSignature?.hex}
         </Text>
         <Text style={styles.label}>
           Typed Data Signature Valid:{' '}
-          {state?.typedDataSignature?.valid ? 'TRUE' : 'FALSE'}
+          {state?.typedDataSignature?.valid ? 'VALID' : 'INVALID'}
         </Text>
 
         {/* Handle NFT Minting */}
