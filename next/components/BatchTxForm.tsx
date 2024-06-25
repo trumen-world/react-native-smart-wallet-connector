@@ -36,7 +36,7 @@ const FormSchema = z.object({
   args: z.string().array(),
 });
 
-const Batcher = () => {
+const BatchTxForm = () => {
   const [user] = useUser();
   const [batch, setBatch] = useBatch();
   const [defaultValuesSet, setDefaultValuesSet] = useState(false);
@@ -245,4 +245,4 @@ const Batcher = () => {
 //   </div>
 // );
 
-export default Batcher;
+export default BatchTxForm;

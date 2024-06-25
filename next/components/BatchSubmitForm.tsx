@@ -30,7 +30,7 @@ const FormSchema = z.object({
     .array(),
 });
 
-const BatchForm = () => {
+const BatchSubmitForm = () => {
   const [user] = useUser();
   const [batch, setBatch] = useBatch();
   const { writeContracts } = useWriteContracts();
@@ -158,4 +158,4 @@ const BatchForm = () => {
   );
 };
 
-export default BatchForm;
+export default BatchSubmitForm;

@@ -28,7 +28,7 @@ import {
 import useBatch, { BatchState, Transaction } from "@/lib/hooks/use-batch";
 import { Button } from "./ui/button";
 import { Dna, Trash } from "lucide-react";
-import BatchForm from "./BatchForm";
+import BatchSubmitForm from "./BatchSubmitForm";
 
 export default function TxTable() {
   const [batch, setBatch] = useBatch();
@@ -147,7 +147,9 @@ export default function TxTable() {
         </Table>
       </CardContent>
       <CardFooter>
-        {batch.transactions && batch.transactions.length > 0 && <BatchForm />}
+        {batch.transactions && batch.transactions.length > 0 && (
+          <BatchSubmitForm />
+        )}
       </CardFooter>
     </Card>
   );
