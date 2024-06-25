@@ -27,7 +27,7 @@ import useBatch, { BatchState } from "@/lib/hooks/use-batch";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
-import { PackagePlus, Plus, PlusCircle } from "lucide-react";
+import { PackagePlus, Plus, PlusCircle, Trash } from "lucide-react";
 import { Input } from "./ui/input";
 import { parseAbi, parseAbiItem } from "viem";
 
@@ -75,10 +75,14 @@ const Batcher = () => {
     }
   }, [user.address, defaultValuesSet, form]);
 
-  const { fields, append } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "args" as never,
   });
+
+  const deleteArgument = (index: number) => {
+    remove(index);
+  };
 
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
     console.log("Form Data Submitted:", data);
@@ -173,12 +177,23 @@ const Batcher = () => {
 
                     <FormControl>
                       <div className="flex flex-col items-center gap-4">
-                        {fields.map((field, index) => (
-                          <Input
+                        {fields.map((field, i) => (
+                          <div
                             key={field.id}
-                            placeholder={`Argument ${index + 1}`}
-                            {...form.register(`args.${index}`)}
-                          />
+                            className="flex w-full items-center gap-4"
+                          >
+                            <Input
+                              placeholder={`Argument ${i + 1}`}
+                              {...form.register(`args.${i}`)}
+                            />
+                            <Button
+                              variant={"destructive"}
+                              className="p-1 px-3"
+                              onClick={() => deleteArgument(i)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
                         ))}
                         <div className="flex w-full justify-end">
                           <Button
