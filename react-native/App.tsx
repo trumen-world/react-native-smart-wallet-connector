@@ -14,39 +14,67 @@ import {
   StyleSheet,
   Linking,
   TextInput,
+  ScrollView,
 } from 'react-native';
 
 type AppState = {
-  address: string;
-  signature: {
-    hex: string;
-    valid: boolean;
+  address?: string;
+  siweSignature?: {
+    hex: string | null;
+    valid: boolean | null;
+  };
+  typedDataSignature?: {
+    hex: string | null;
+    valid: boolean | null;
   };
   message: string;
 };
 
 const App = () => {
-  const [state, setState] = useState<AppState | null>(null);
+  const [state, setState] = useState<AppState>({
+    address: undefined,
+    siweSignature: undefined,
+    typedDataSignature: undefined,
+    message: '',
+  });
 
   const handleDeepLink = useCallback(({url}: {url: string}) => {
     console.log('event', url);
 
-    const {address, signature, valid} = getQueryParams(url);
-    setState({
-      address: address || '',
-      signature: {
-        hex: signature || '',
-        valid: valid === 'true' ? true : false,
+    const {
+      address,
+      siweSignature,
+      typedDataSignature,
+      siweValid,
+      typedDataValid,
+    } = getQueryParams(url);
+    setState((p: AppState) => ({
+      ...p,
+      address,
+      siweSignature: {
+        hex: siweSignature ? siweSignature : p.siweSignature?.hex || '',
+        valid: siweValid
+          ? siweValid === 'true'
+            ? true
+            : false
+          : p.siweSignature?.valid === true
+          ? true
+          : false,
       },
-      message: 'N/A',
-    });
+      typedDataSignature: {
+        hex: typedDataSignature
+          ? typedDataSignature
+          : p.typedDataSignature?.hex || '',
+        valid: typedDataValid
+          ? typedDataValid === 'true'
+            ? true
+            : false
+          : p.typedDataSignature?.valid === true
+          ? true
+          : false,
+      },
+    }));
   }, []);
-
-  useEffect(() => {
-    const sub = Linking.addEventListener('url', handleDeepLink);
-
-    return () => sub.remove();
-  }, [handleDeepLink]);
 
   const getQueryParams = (url: string) => {
     const queryString = url.split('?')[1];
@@ -62,7 +90,6 @@ const App = () => {
 
   const handleCreateButtonPress = () => {
     const url = 'http://localhost:3000/connect';
-    // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app';
     Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
@@ -75,8 +102,7 @@ const App = () => {
   };
 
   const handleSignButtonPress = () => {
-    // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app/sign/{messageToSign}';
-    const url = `http://localhost:3000/sign?message=${state?.message}&address=${state?.address}`;
+    const url = `http://localhost:3000/sign?message=${state?.message}`;
     Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
@@ -89,7 +115,6 @@ const App = () => {
   };
 
   const handleSIWE = () => {
-    // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app/sign/{messageToSign}';
     const url = 'http://localhost:3000/siwe';
     Linking.canOpenURL(url)
       .then(supported => {
@@ -102,116 +127,153 @@ const App = () => {
       .catch(err => console.error('An error occurred', err));
   };
 
-  const handlePermit = () => {
-    // const url = 'https://react-native-smart-wallet-web-app-pryority-pryoritys-projects.vercel.app/sign/{messageToSign}';
-    const url = 'http://localhost:3000/permit';
-    Linking.canOpenURL(url)
-      .then(supported => {
-        if (supported) {
-          Linking.openURL(url);
-        } else {
-          console.log(`Don't know how to open URI: ${url}`);
-        }
-      })
-      .catch(err => console.error('An error occurred', err));
-  };
+  useEffect(() => {
+    const sub = Linking.addEventListener('url', handleDeepLink);
+    return () => sub.remove();
+  }, [handleDeepLink]);
 
   useEffect(() => {
     console.log('State:', {state});
   }, [state]);
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={handleCreateButtonPress}>
-        <Text style={styles.buttonText}>Create CB Smart Wallet</Text>
-      </TouchableOpacity>
-      <Text>Address: {state?.address}</Text>
-      <View style={{height: 10}} />
+    <ScrollView>
+      <View style={styles.container}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleCreateButtonPress}>
+          <Text style={styles.buttonText}>Create Smart Wallet</Text>
+        </TouchableOpacity>
+        <Text style={styles.addressLabel}>
+          Address: {state?.address?.slice(0, 6)}...
+          {state?.address?.slice(
+            state?.address?.length - 4,
+            state?.address?.length,
+          )}
+        </Text>
+        <View style={styles.separatorL} />
 
-      {/* A text input for user to enter the message to sign */}
-      <TextInput
-        style={{height: 40, borderColor: 'gray', borderWidth: 1}}
-        placeholder="Enter message to sign"
-        onChangeText={text =>
-          setState(p => {
-            if (p === null) {
-              return {
-                address: state?.address || '',
-                signature: {
-                  hex: state?.signature.hex || '',
-                  valid: state?.signature.valid || false,
-                },
-                message: state?.message || '',
-              };
-            } else {
-              return {
-                ...p,
-                message: text,
-              };
-            }
-          })
-        }
-      />
-      <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
-        <Text style={styles.buttonText}>Sign Message</Text>
-      </TouchableOpacity>
-      <View style={{height: 10}} />
-      <TouchableOpacity style={styles.button} onPress={handleSIWE}>
-        <Text style={styles.buttonText}>Sign-in with Ethereum</Text>
-      </TouchableOpacity>
-      <View style={{height: 10}} />
-      <TouchableOpacity style={styles.button} onPress={handlePermit}>
+        {/* A text input for user to enter the message to sign */}
+
+        <TouchableOpacity style={styles.button} onPress={handleSIWE}>
+          <Text style={styles.buttonText}>Sign-in with Ethereum</Text>
+        </TouchableOpacity>
+        <View style={styles.separatorL} />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter message to sign"
+          onChangeText={text =>
+            setState((p: AppState | null) => ({
+              ...p,
+              message: text,
+            }))
+          }
+        />
+        <View style={styles.separator} />
+        <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
+          <Text style={styles.buttonText}>Sign Message</Text>
+        </TouchableOpacity>
+        <View style={styles.separatorL} />
+        {/* <TouchableOpacity style={styles.button} onPress={handlePermit}>
         <Text style={styles.buttonText}>Sign Permission</Text>
-      </TouchableOpacity>
-      <View style={{height: 10}} />
-      <Text style={styles.signature}>Signature: {state?.signature.hex}</Text>
-      <Text style={styles.signature}>
-        Valid: {state?.signature.valid ? 'TRUE' : 'FALSE'}
-      </Text>
+      </TouchableOpacity> */}
+        <View style={styles.separator} />
+        <Text style={styles.signature}>
+          SIWE Signature: {state?.siweSignature?.hex}
+        </Text>
+        <Text style={styles.label}>
+          SIWE Signature Valid: {state?.siweSignature?.valid ? 'TRUE' : 'FALSE'}
+        </Text>
+        <View style={styles.separator} />
+        <Text style={styles.signature}>
+          Typed Data Signature: {state?.typedDataSignature?.hex}
+        </Text>
+        <Text style={styles.label}>
+          Typed Data Signature Valid:{' '}
+          {state?.typedDataSignature?.valid ? 'TRUE' : 'FALSE'}
+        </Text>
 
-      {/* Handle NFT Minting */}
-      {/* <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
+        {/* Handle NFT Minting */}
+        {/* <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
         <Text style={styles.buttonText}>Sign the message with CB Smart Wallet</Text>
       </TouchableOpacity> */}
-    </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
+    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+    paddingTop: 64,
   },
   button: {
-    padding: 15,
+    alignSelf: 'stretch',
     backgroundColor: '#007bff',
     borderRadius: 5,
+    padding: 15,
+    marginBottom: 10,
   },
   buttonText: {
     color: '#fff',
     fontSize: 18,
+    textAlign: 'center',
   },
-  modalContainer: {
-    flex: 1,
-    marginTop: 20,
+  label: {
+    fontSize: 16,
+    marginTop: 10,
+    marginBottom: 5,
   },
-  closeButton: {
-    padding: 10,
+  addressLabel: {
+    width: '100%',
+    fontSize: 16,
+    marginTop: 10,
+    marginBottom: 5,
+    textAlign: 'left',
+  },
+  inputContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ff0000',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 10,
   },
-  closeButtonText: {
-    color: '#fff',
-    fontSize: 18,
-  },
-  webView: {
+  input: {
     flex: 1,
+    height: 40,
+    width: '100%',
+    borderColor: 'gray',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+  },
+  signButton: {
+    backgroundColor: '#28a745',
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginLeft: 10,
+  },
+  signatureContainer: {
+    marginTop: 20,
+    width: '100%',
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   signature: {
-    maxHeight: 256,
-    overflow: 'scroll',
+    fontSize: 14,
+    marginBottom: 5,
   },
+  separator: {height: 10},
+  separatorL: {height: 42},
 });
 
 export default App;
