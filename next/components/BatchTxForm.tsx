@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -26,7 +25,7 @@ import useBatch, { BatchState } from "@/lib/hooks/use-batch";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
-import { PackagePlus, Plus, PlusCircle, Trash } from "lucide-react";
+import { PackagePlus, PlusCircle, Trash } from "lucide-react";
 import { Input } from "./ui/input";
 import { parseAbi, parseAbiItem } from "viem";
 
@@ -39,7 +38,6 @@ const FormSchema = z.object({
 const BatchTxForm = () => {
   const [user] = useUser();
   const [batch, setBatch] = useBatch();
-  const [defaultValuesSet, setDefaultValuesSet] = useState(false);
 
   const { error } = useConnect();
   const account = useAccount();
@@ -54,15 +52,13 @@ const BatchTxForm = () => {
   });
 
   useEffect(() => {
-    if (user.address && !defaultValuesSet) {
-      form.reset({
-        address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
-        abi: ["function safeMint(address to)"],
-        args: [],
-      });
-      setDefaultValuesSet(true);
-    }
-  }, [user.address, defaultValuesSet, form]);
+    if (!user.address) return;
+    form.reset({
+      address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
+      abi: ["function safeMint(address to)"],
+      args: [user.address],
+    });
+  }, [user.address, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -72,10 +68,6 @@ const BatchTxForm = () => {
   const deleteArgument = (index: number) => {
     remove(index);
   };
-
-  useEffect(() => {
-    append(user.address);
-  }, [append, user.address]);
 
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
     console.log("Form Data Submitted:", data);
@@ -223,26 +215,8 @@ const BatchTxForm = () => {
           {/* {callsStatus && <div> Status: {callsStatus.status}</div>} */}
         </CardContent>
       </div>
-      <CardFooter className="flex flex-col gap-4">
-        {/* {mintMessage && (
-          <MessageBadge title="Mint Message:" message={mintMessage} />
-        )} */}
-      </CardFooter>
     </Card>
   );
 };
-
-// const MessageBadge = ({
-//   title,
-//   message,
-// }: {
-//   title: string;
-//   message: string | undefined;
-// }) => (
-//   <div className="flex flex-col items-center">
-//     <Badge variant={"secondary"}>{title}</Badge>
-//     <p className="text-xs max-w-sm break-all">{message || ""}</p>
-//   </div>
-// );
 
 export default BatchTxForm;
