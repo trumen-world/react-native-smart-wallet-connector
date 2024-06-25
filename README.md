@@ -11,4 +11,11 @@ For the Coinbase Onchain Summer Buildathon we built a React Native application t
 ### Connect Address
 
 ![Address Demo](./img/address-demo.png)
+<<<<<<< HEAD
 >>>>>>> 5ae47eb (➕ Add connect/create demo)
+=======
+
+### Sign-in with Ethereum (SIWE)
+
+![SIWE Demo](./img/siwe-sign.png)
+>>>>>>> d31f617 (➕ Add siwe demo image)
