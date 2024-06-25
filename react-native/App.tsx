@@ -179,17 +179,24 @@ const App = () => {
       </TouchableOpacity> */}
         <View style={styles.separator} />
         <Text style={styles.label}>
-          SIWE Signature: {state?.siweSignature?.valid ? 'VALID' : 'INVALID'}
+          SIWE Signature:{' '}
+          {state?.siweSignature
+            ? state?.siweSignature?.valid
+              ? 'VALID'
+              : 'INVALID'
+            : 'NONE'}
         </Text>
         <Text style={styles.signature}>{state?.siweSignature?.hex}</Text>
         <View style={styles.separator} />
-        <Text style={styles.signature}>
-          Typed Data Signature: {state?.typedDataSignature?.hex}
-        </Text>
         <Text style={styles.label}>
           Typed Data Signature Valid:{' '}
-          {state?.typedDataSignature?.valid ? 'VALID' : 'INVALID'}
+          {state?.typedDataSignature
+            ? state?.typedDataSignature?.valid
+              ? 'VALID'
+              : 'INVALID'
+            : 'NONE'}
         </Text>
+        <Text style={styles.signature}>{state?.typedDataSignature?.hex}</Text>
 
         {/* Handle NFT Minting */}
         {/* <TouchableOpacity style={styles.button} onPress={handleSignButtonPress}>
