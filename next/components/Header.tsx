@@ -50,13 +50,13 @@ export default function Header() {
       ? `&siweSignature=${encodeURIComponent(user.siweSignature.hex)}`
       : "";
     const siweValid = user.siweSignature?.valid
-      ? `&valid=${user.siweSignature?.valid}`
+      ? `&siweValid=${user.siweSignature?.valid}`
       : "";
     const typedDataSignatureParam = user.typedDataSignature?.hex
       ? `&typedDataSignature=${encodeURIComponent(user.typedDataSignature.hex)}`
       : "";
     const typedDataValid = user.typedDataSignature?.valid
-      ? `&valid=${user.typedDataSignature?.valid}`
+      ? `&typedDataValid=${user.typedDataSignature?.valid}`
       : "";
     const permitSignatureParam = user.permitSignature?.hex
       ? `&permitSignature=${encodeURIComponent(user.permitSignature.hex)}`
