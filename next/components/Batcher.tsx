@@ -19,10 +19,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "./ui/button";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect } from "wagmi";
 import { cn } from "@/lib/utils";
 import useUser from "@/lib/hooks/use-user";
-import { useWriteContracts, useCallsStatus } from "wagmi/experimental";
 import useBatch, { BatchState } from "@/lib/hooks/use-batch";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,8 +29,6 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { PackagePlus, Plus, PlusCircle, Trash } from "lucide-react";
 import { Input } from "./ui/input";
 import { parseAbi, parseAbiItem } from "viem";
-import { toast } from "./ui/use-toast";
-import { ToastAction } from "./ui/toast";
 
 const FormSchema = z.object({
   address: z.string(),
@@ -40,24 +37,12 @@ const FormSchema = z.object({
 });
 
 const Batcher = () => {
-  const [user, setUser] = useUser();
+  const [user] = useUser();
   const [batch, setBatch] = useBatch();
   const [defaultValuesSet, setDefaultValuesSet] = useState(false);
 
-  const { connect, error } = useConnect();
-  const { data: id, writeContracts } = useWriteContracts();
+  const { error } = useConnect();
   const account = useAccount();
-  const { data: callsStatus } = useCallsStatus({
-    id: id as string,
-    query: {
-      initialData: {
-        enabled: !!id,
-        // Poll every second until the calls are confirmed
-        refetchInterval: (data: any) =>
-          data.state.data?.status === "CONFIRMED" ? false : 1000,
-      },
-    },
-  });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),

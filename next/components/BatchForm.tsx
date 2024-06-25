@@ -33,8 +33,7 @@ const FormSchema = z.object({
 const BatchForm = () => {
   const [user] = useUser();
   const [batch, setBatch] = useBatch();
-  // const { address } = useAccount();
-  const { data: id, writeContracts } = useWriteContracts();
+  const { writeContracts } = useWriteContracts();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -90,9 +89,7 @@ const BatchForm = () => {
   }, [user.address, setBatch]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    // console.log("ABI", transactions[0].abi);
     console.log("BATCH FORM", data);
-    // console.log([...transactions]);
     if (!batch.transactions || !user.address) return;
     form.reset({ transactions: batch.transactions });
 
