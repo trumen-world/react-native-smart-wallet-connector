@@ -39,13 +39,18 @@ export default function TxTable() {
     }));
   };
   const duplicateTx = (i: number) => {
-    setBatch((p: BatchState) => ({
-      ...p,
-      transactions: [
-        ...(p.transactions || []),
-        p.transactions?.find((_, index) => index !== i) as Transaction,
-      ],
-    }));
+    setBatch((p: BatchState) => {
+      const transactionToDuplicate = p.transactions?.[i];
+      if (!transactionToDuplicate) return p;
+
+      return {
+        ...p,
+        transactions: [
+          ...(p.transactions || []),
+          { ...transactionToDuplicate },
+        ],
+      };
+    });
   };
 
   return (
@@ -75,12 +80,12 @@ export default function TxTable() {
             {batch.transactions?.map((t, i) => (
               <TableRow key={i} className="bg-accent">
                 <TableCell>
-                  <div className="tracking-tighter font-light text-xs">
+                  <div className="text-xs font-light tracking-tighter">
                     {t.address.slice(0, 6)}...
                     {t.address.slice(t.address.length - 4, t.address.length)}
                   </div>
                 </TableCell>
-                <TableCell className="hidden sm:table-cell font-bold tracking-tighter">
+                <TableCell className="hidden font-bold tracking-tighter sm:table-cell">
                   {t.functionName}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
@@ -142,9 +147,7 @@ export default function TxTable() {
         </Table>
       </CardContent>
       <CardFooter>
-        {batch.transactions && batch.transactions.length > 0 && (
-          <BatchForm transactions={batch.transactions || []} />
-        )}
+        {batch.transactions && batch.transactions.length > 0 && <BatchForm />}
       </CardFooter>
     </Card>
   );

@@ -21,7 +21,7 @@ import {
 import { Button } from "./ui/button";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { cn } from "@/lib/utils";
-import useUser, { UserState } from "@/lib/hooks/use-user";
+import useUser from "@/lib/hooks/use-user";
 import { useWriteContracts, useCallsStatus } from "wagmi/experimental";
 import useBatch, { BatchState } from "@/lib/hooks/use-batch";
 import { z } from "zod";
@@ -29,8 +29,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { PackagePlus, Plus, PlusCircle } from "lucide-react";
 import { Input } from "./ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Abi, AbiItem, AbiItemName, parseAbi, parseAbiItem } from "viem";
+import { parseAbi, parseAbiItem } from "viem";
 
 const FormSchema = z.object({
   address: z.string(),
@@ -41,12 +40,9 @@ const FormSchema = z.object({
 const Batcher = () => {
   const [user, setUser] = useUser();
   const [batch, setBatch] = useBatch();
-  const [appUrl, setAppUrl] = useState<string | null>(null);
-  const [defaultValues, setDefaultValues] = useState({});
   const [defaultValuesSet, setDefaultValuesSet] = useState(false);
 
   const { connect, error } = useConnect();
-  const { address } = useAccount();
   const { data: id, writeContracts } = useWriteContracts();
   const account = useAccount();
   // const { data: callsStatus } = useCallsStatus({

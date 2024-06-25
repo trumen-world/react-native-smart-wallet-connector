@@ -11,12 +11,14 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import useBatch, { Transaction } from "@/lib/hooks/use-batch";
+import useBatch, { BatchState, Transaction } from "@/lib/hooks/use-batch";
 import { useCallsStatus, useWriteContracts } from "wagmi/experimental";
 import { Fingerprint } from "lucide-react";
 import useUser from "@/lib/hooks/use-user";
 import { useAccount } from "wagmi";
 import { useEffect } from "react";
+import { client } from "@/lib/chain/viem";
+import { BaseError, ContractFunctionRevertedError } from "viem";
 
 const FormSchema = z.object({
   transactions: z
@@ -97,15 +99,50 @@ const BatchForm = () => {
     });
   }, [user.address, setBatch]);
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
     // console.log("ABI", transactions[0].abi);
     console.log("BATCH FORM", data);
     // console.log([...transactions]);
-    if (!batch.transactions) return;
+    if (!batch.transactions || !user.address) return;
     form.reset({ transactions: batch.transactions });
-    writeContracts({
-      contracts: batch.transactions,
-    });
+
+    const validTransactions: Transaction[] = [];
+    for (const transaction of batch.transactions) {
+      try {
+        const result = await client.simulateContract({
+          ...transaction,
+          account: user.address,
+        });
+        console.log("simulation result", result);
+        if (result) {
+          validTransactions.push(transaction);
+        }
+      } catch (err) {
+        if (err instanceof BaseError) {
+          const revertError = err.walk(
+            (err) => err instanceof ContractFunctionRevertedError,
+          );
+          if (revertError instanceof ContractFunctionRevertedError) {
+            const errorName = revertError.data?.errorName ?? "";
+            // do something with `errorName`
+          }
+        }
+      }
+    }
+
+    console.log(validTransactions);
+    // Update the batch state with valid transactions
+    setBatch((prev: BatchState) => ({
+      ...prev,
+      transactions: validTransactions,
+    }));
+
+    // Submit valid transactions
+    if (validTransactions.length > 0) {
+      writeContracts({
+        contracts: validTransactions,
+      });
+    }
   }
 
   return (
