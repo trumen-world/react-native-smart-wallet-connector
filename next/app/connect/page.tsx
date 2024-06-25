@@ -51,7 +51,7 @@ export default function Connect() {
                   : "Connect Wallet"}
               </CardTitle>
               <CardDescription className="text-center">
-                {`Let's verify your wallet's signature by signing in with Ethereum (SIWE).`}
+                Batch mint NFTs, SIWE, or sign typed data.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center">
