@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { config } from "./chain/wagmi";
+import { APP } from "./constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -8,11 +9,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getChainName(chainId: number) {
   return config.chains.find((chain) => chain.id === chainId)?.name || null;
-}
-
-export function handleAppReturn() {
-  const appUrl = `RNCBSmartWallet://`;
-  window.location.href = appUrl;
 }
 
 export function toDeadline(expiration: number): number {

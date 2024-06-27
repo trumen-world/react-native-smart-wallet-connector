@@ -13,7 +13,6 @@ import {
 import { CircleUser, Cog, Moon, Sun, UserRoundX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/use-toast";
 import {
   useConnect,
   useDisconnect,
@@ -24,7 +23,7 @@ import {
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import useUser, { UserState } from "@/lib/hooks/use-user";
 import { cn, getChainName } from "@/lib/utils";
-import { NULL_USER } from "@/lib/constants";
+import { APP, NULL_USER } from "@/lib/constants";
 import { coinbaseWallet } from "wagmi/connectors";
 import { Address } from "viem";
 import { useTheme } from "next-themes";
@@ -65,7 +64,7 @@ export function ConnectSelect() {
   const handleJumpToRNApp = () => {
     if (!account.address) return;
 
-    const appUrl = `RNCBSmartWallet://address?address=${encodeURIComponent(account.address)}`;
+    const appUrl = `${APP.deeplink}address?address=${encodeURIComponent(account.address)}`;
     console.log("appUrl", appUrl);
     window.location.href = appUrl;
   };

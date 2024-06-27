@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Link from "next/link";
-import { ThemeToggleMobile } from "./ThemeToggleMobile";
 import {
   Diamond,
   Fingerprint,
@@ -19,6 +18,7 @@ import useUser, { UserState } from "@/lib/hooks/use-user";
 import { useEffect, useState } from "react";
 import { Badge } from "./ui/badge";
 import useApp from "@/lib/hooks/use-app";
+import { APP } from "@/lib/constants";
 
 export default function Header() {
   const [user, setUser] = useUser();
@@ -65,7 +65,7 @@ export default function Header() {
       ? `&valid=${user.permitSignature?.valid}`
       : "";
 
-    const url = `RNCBSmartWallet://${addressParam}${siweSignatureParam}${siweValid}${typedDataSignatureParam}${typedDataValid}${permitSignatureParam}${permitValid}`;
+    const url = `${APP.deeplink}${addressParam}${siweSignatureParam}${siweValid}${typedDataSignatureParam}${typedDataValid}${permitSignatureParam}${permitValid}`;
     console.log("url", url);
     setApp({ url });
   }, [
@@ -231,13 +231,13 @@ export default function Header() {
                   </Badge>
                 </Link>
                 <Link
-                  href="/permit"
-                  className="flex w-full text-lg font-semibold md:text-base"
+                  href="#"
+                  className="flex w-full text-lg font-semibold opacity-50 md:text-base"
                   onClick={sheetOnOpenChange}
                 >
                   <Badge
                     variant={"outline"}
-                    className="flex w-1/2 gap-1 rounded-lg border-2 border-transparent text-center text-base hover:border-2 hover:border-primary hover:shadow-md"
+                    className="flex w-1/2 cursor-not-allowed gap-1 rounded-lg border-2 border-transparent text-center text-base hover:border-2 hover:border-primary hover:shadow-md"
                   >
                     Permit <LockKeyholeOpen className="h-4 w-4" />
                   </Badge>

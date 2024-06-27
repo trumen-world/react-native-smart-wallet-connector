@@ -1,6 +1,10 @@
 import { coinbaseWallet } from "wagmi/connectors";
 import { UserState } from "./hooks/use-user";
 
+export const APP = {
+  deeplink: "MyRNAppName://", // change to your app's name
+};
+
 export const NULL_USER = {
   address: null,
   balance: null,
