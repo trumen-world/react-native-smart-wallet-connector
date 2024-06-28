@@ -27,11 +27,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { PackagePlus, PlusCircle, Trash } from "lucide-react";
 import { Input } from "./ui/input";
-import { parseAbi, parseAbiItem } from "viem";
+import {
+  Abi,
+  Address,
+  BaseError,
+  ContractFunctionRevertedError,
+  parseAbi,
+  parseAbiItem,
+} from "viem";
+import { client } from "@/lib/chain/viem";
 
 const FormSchema = z.object({
   address: z.string(),
-  abi: z.any(),
+  selector: z.string().min(8),
   args: z.string().array(),
 });
 
@@ -45,20 +53,20 @@ const BatchTxForm = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
-      abi: ["function safeMint(address to)"],
+      address: "",
+      selector: "",
       args: [],
     },
   });
 
-  useEffect(() => {
-    if (!user.address) return;
-    form.reset({
-      address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
-      abi: ["function safeMint(address to)"],
-      args: [user.address],
-    });
-  }, [user.address, form]);
+  // useEffect(() => {
+  //   if (!user.address) return;
+  //   form.reset({
+  //     address: "0x119Ea671030FBf79AB93b436D2E20af6ea469a19",
+  //     abi: [],
+  //     args: [user.address],
+  //   });
+  // }, [user.address, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -69,19 +77,44 @@ const BatchTxForm = () => {
     remove(index);
   };
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     console.log("Form Data Submitted:", data);
-    const parsedAbi = parseAbi(data.abi);
+    console.log("data.selector", data.selector);
+    const parsedAbi = parseAbiItem(data.selector);
+    console.log(parsedAbi);
+    console.log("Object.values(parsedCall)", Object.values(parsedAbi));
     const transaction = {
       address: data.address as `0x${string}`,
-      abi: parsedAbi,
-      functionName: Object.values(parsedAbi[0])[0] as string,
+      abi: [parsedAbi],
+      functionName: Object.values(parsedAbi)[0] as string,
       args: data.args,
     };
-    setBatch((p: BatchState) => ({
-      ...p,
-      transactions: [...(p.transactions || []), transaction],
-    }));
+
+    try {
+      const result = await client.simulateContract({
+        ...transaction,
+        account: user.address as Address,
+      });
+      console.log("simulation result", result);
+      if (result) {
+        console.log("added tx");
+        setBatch((p: BatchState) => ({
+          ...p,
+          transactions: [...(p.transactions || []), transaction],
+        }));
+      }
+      console.log("could not add tx, cause sim failed");
+    } catch (err) {
+      if (err instanceof BaseError) {
+        const revertError = err.walk(
+          (err) => err instanceof ContractFunctionRevertedError,
+        );
+        if (revertError instanceof ContractFunctionRevertedError) {
+          const errorName = revertError.data?.errorName ?? "";
+          // do something with `errorName`
+        }
+      }
+    }
   };
 
   useEffect(() => {
@@ -115,7 +148,10 @@ const BatchTxForm = () => {
                     <FormLabel>Contract Address</FormLabel>
 
                     <FormControl>
-                      <Input placeholder="address" {...field} />
+                      <Input
+                        placeholder="Enter the Contract Address"
+                        {...field}
+                      />
                     </FormControl>
 
                     <FormDescription>
@@ -127,21 +163,15 @@ const BatchTxForm = () => {
               />
               <FormField
                 control={form.control}
-                name="abi"
+                name="selector"
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>Function</FormLabel>
 
                     <FormControl>
                       <Input
-                        placeholder={"penis"}
+                        placeholder={"e.g. function safeMint(address to)"}
                         {...field}
-                        onClick={() => {
-                          console.log(field.value);
-                          console.log(
-                            parseAbiItem("function safeMint(address to)"),
-                          );
-                        }}
                       />
                     </FormControl>
 
@@ -180,7 +210,7 @@ const BatchTxForm = () => {
                             </Button>
                           </div>
                         ))}
-                        <div className="flex w-full justify-end">
+                        <div className="flex w-full justify-start">
                           <Button
                             type="button"
                             size="sm"

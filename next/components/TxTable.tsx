@@ -132,7 +132,7 @@ export default function TxTable() {
                     <Dna className="h-4 w-4" />
                   </Button>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="table-cell text-right">
                   <Button
                     variant={"destructive"}
                     className="p-1 px-3"
